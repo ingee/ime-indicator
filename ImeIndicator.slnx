@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ImeIndicator/ImeIndicator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ImeIndicator.Tests/ImeIndicator.Tests.csproj" />
+  </Folder>
+</Solution>
