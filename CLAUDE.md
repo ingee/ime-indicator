@@ -50,7 +50,7 @@ AutoHotkey로 먼저 프로토타입을 만들어 검증했고, 이 과정에서
 
 ## 5. UI 스펙
 
-- 모니터 개수를 자동 감지하여, **각 모니터 상단 중앙**에 인디케이터 창을 하나씩 표시
+- 모니터 수를 자동 감지하여, **각 모니터 상단 중앙**에 인디케이터 창을 하나씩 표시
 - 창 크기: 정사각형, 한 변 약 36px (조정 가능하도록 설정값으로 분리)
 - 배경색: 완전 불투명
   - 한글 모드: 빨강 (`#FF0000`)
@@ -83,3 +83,13 @@ TSF 이벤트 기반이면 이론적으로 어긋남이 발생하지 않아야 �
 `ime_indicator.ahk` (AutoHotkey, 참고용 — 이번 프로젝트에서는 사용하지 않음): 위 3번
 항목에 정리된 한계로 인해 대체되는 것이며, UI 스펙(크기/색상/위치)은 이 파일에서 이미
 사용자 검증을 거친 값을 그대로 계승한다.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context layout — `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
