@@ -174,3 +174,18 @@
 [16:40:48] pid=7352 tid=14124 OnSetFocus: myPid=7352 myTid=14124 fgPid=7352 fgTid=14500 match=no
 [16:40:48] pid=5516 tid=8052 OnSetFocus() fired
 [16:40:48] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:42:21] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:42:21] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:42:21] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:42:30] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:42:30] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:42:30] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:42:31] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:42:31] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:42:31] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:42:32] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:42:32] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:42:32] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:44:09] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:44:09] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:44:09] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0

@@ -1026,3 +1026,28 @@
 [16:40:48] pid=5516 ENUM[3] value: vt=0 (not VT_I4)
 [16:40:48] pid=5516 ENUM[4] found compartment {85A688F7-6DC8-4F17-A83A-B11C09CDD7BF}
 [16:40:48] pid=5516 ENUM[4] value: vt=13 (not VT_I4)
+[16:42:21] pid=5516 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:42:21] pid=5516 OnChange DOC value: vt=0 (not VT_I4)
+[16:42:21] pid=5516 OnChange GLOBAL value: vt=0 (not VT_I4)
+[16:42:21] pid=5516 OnChange CONTEXT value: vt=0 (not VT_I4)
+[16:42:21] pid=5516 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:42:30] pid=5516 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:42:30] pid=5516 OnChange DOC value: vt=0 (not VT_I4)
+[16:42:30] pid=5516 OnChange GLOBAL value: vt=0 (not VT_I4)
+[16:42:30] pid=5516 OnChange CONTEXT value: vt=0 (not VT_I4)
+[16:42:30] pid=5516 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:42:31] pid=5516 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:42:31] pid=5516 OnChange DOC value: vt=0 (not VT_I4)
+[16:42:31] pid=5516 OnChange GLOBAL value: vt=0 (not VT_I4)
+[16:42:31] pid=5516 OnChange CONTEXT value: vt=0 (not VT_I4)
+[16:42:31] pid=5516 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:42:32] pid=5516 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:42:32] pid=5516 OnChange DOC value: vt=0 (not VT_I4)
+[16:42:32] pid=5516 OnChange GLOBAL value: vt=0 (not VT_I4)
+[16:42:32] pid=5516 OnChange CONTEXT value: vt=0 (not VT_I4)
+[16:42:32] pid=5516 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:44:09] pid=5516 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:44:09] pid=5516 OnChange DOC value: vt=0 (not VT_I4)
+[16:44:09] pid=5516 OnChange GLOBAL value: vt=0 (not VT_I4)
+[16:44:09] pid=5516 OnChange CONTEXT value: vt=0 (not VT_I4)
+[16:44:09] pid=5516 OnChange THREADSCOPE value: vt=VT_I4 value=0
