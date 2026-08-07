@@ -47,3 +47,18 @@ ADR-0004는 `GUID_COMPARTMENT_KEYBOARD_OPENCLOSE`를 문서/전역(`GetGlobalCom
   CLAUDE.md 7절을 이 시점에 맞춰 갱신해야 한다.
 - 프로토타입 코드(`TipPoc6`, `TipPoc7`)는 `prototype/tip-detection-poc-throwaway` 브랜치에
   보존한다.
+
+## Update — 관리자 권한 필요 여부 실측 확인
+
+`src/ImeIndicatorTip/` 뼈대 구현 중 CLSID를 `HKEY_CURRENT_USER\Software\Classes`에만
+등록하고 메모장을 전부 종료했다가 완전히 새로 띄워 테스트한 결과, `Activate()`가 전혀
+호출되지 않았다. 같은 코드를 `HKEY_LOCAL_MACHINE`으로만 바꿔 등록하면 새로 띄운 메모장에서
+곧바로 `Activate()`가 호출됐다. `ITfInputProcessorProfiles::AddLanguageProfile`이 만드는
+TIP 프로필(`HKLM\SOFTWARE\Microsoft\CTF\TIP\...`)도 CLSID 위치와 무관하게 항상 HKLM에
+생긴다. 즉 **TSF의 TIP 로딩 판단은 일반 COM의 HKCU/HKLM 병합 조회를 따르지 않고 HKLM만
+본다** — CLSID를 HKCU에만 등록해도 `CoCreateInstance`는 성공하지만 TSF는 그 TIP을 다른
+프로세스에 로드하지 않는다.
+
+**결론: TIP DLL 설치(`DllRegisterServer`)는 관리자 권한이 필요하다.** ADR-0003의 배포 방식
+변경 예상이 그대로 확정됐다 — CLAUDE.md 7절, ADR-0001을 이 사실에 맞춰 갱신한다(별도
+후속 결정으로 미뤄뒀던 부분).

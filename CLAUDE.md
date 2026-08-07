@@ -105,8 +105,10 @@ TSF 이벤트 기반이면 이론적으로 어긋남이 발생하지 않아야 �
 - 배포 형태: WinForms UI EXE는 .NET 8 기준 **self-contained 단일 파일(single-file)**로
   게시한다(`dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true`). UI
   EXE 자체 실행에는 여전히 .NET 런타임 설치가 불필요하다. 다만 TIP DLL은 별도로 COM/TSF에
-  등록하는 1회성 설치 단계가 필요하다(관리자 권한이 실제로 필요한지는 검증 중 — ADR-0005,
-  `CLAUDE_worklist.md` 참고).
+  등록하는 1회성 설치 단계가 필요하며, **이 등록은 관리자 권한이 있어야 한다**(HKCU만으로는
+  COM 등록 자체는 성공하지만 TSF가 실제로 TIP을 로드하지 않는 것을 실측으로 확인 — ADR-0005
+  Update 참고). 설치 시 1회 관리자 권한 상승(UAC)이 필요하다는 뜻이며, 이후 UI EXE의
+  평소 실행에는 관리자 권한이 필요 없다.
 - 트레이 아이콘: 현재 한/영 상태를 반영하지 않는 고정 아이콘을 사용한다(상태 표시는
   인디케이터 창이 전담). 디자인은 `docs/assets/tray-icon-reference.png`(남색 아웃라인의
   모니터 라인아트 스타일)를 참고하되, 중앙 심볼은 느낌표(`!`) 대신 `A` 글자로 대체한다.

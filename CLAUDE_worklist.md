@@ -44,13 +44,15 @@
 
 ## 3. TIP + IPC 연동 (ADR-0005)
 
-- [ ] **TIP DLL 뼈대 + 등록/로딩 검증**
-  - `src/ImeIndicatorTip/` 프로젝트 생성, `DllRegisterServer`/`DllUnregisterServer`/
+- [x] **TIP DLL 뼈대 + 등록/로딩 검증**
+  - `src/ImeIndicatorTip/` 프로젝트 생성(vcxproj), `DllRegisterServer`/`DllUnregisterServer`/
     `DllGetClassObject`/`DllCanUnloadNow` + 빈 `Activate`/`Deactivate`만 구현.
-  - 검증방법: `regsvr32`로 등록 후 메모장 등 실제 앱을 새로 띄워 `Activate()`가 호출되는지
-    (임시 로그로) 확인. **이 항목에서 HKCU\Software\Classes 등록이 비관리자 셸에서 실제로
-    성공하는지 반드시 확인** — 관리자 권한이 실제로 필요한지가 아직 미검증 상태(ADR-0005
-    참고). TDD 대상 아님 — COM 등록/로딩 자체가 글루.
+  - 검증방법: `regsvr32`로 등록 후 메모장을 완전히 종료했다가 새로 띄워 `Activate()`가
+    호출되는지(임시 로그로) 확인 완료. **HKCU\Software\Classes만으로는 COM 등록은 성공해도
+    TSF가 실제로 로드하지 않고, HKLM에 등록해야 로드된다는 것을 실측으로 확인** — 관리자
+    권한이 필요하다는 뜻(ADR-0005 Update, CLAUDE.md 7절 반영 완료). `regsvr32 /u`로 등록
+    해제 시 레지스트리가 깨끗이 정리되는지도 확인 완료. TDD 대상 아님 — COM 등록/로딩
+    자체가 글루.
 - [ ] **스레드 스코프 컴파트먼트 구독 (TipPoc7 로직 이식)**
   - `ImeStateTip.cpp`에 TipPoc7의 스레드 스코프 QI + `GetCompartment` + `AdviseSink`
     로직을 그대로 옮긴다. 아직 IPC는 연결하지 않고 임시 로그로만 확인.

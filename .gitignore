@@ -6,3 +6,14 @@ bin/
 obj/
 .vs/
 *.user
+
+# C++ (vcxproj) build output
+x64/
+Debug/
+Release/
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.dll
