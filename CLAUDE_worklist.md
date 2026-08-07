@@ -60,13 +60,14 @@
   - 검증방법: 메모장에서 한/영 반복 전환하며 로그에 값이 0/1로 정확히 토글되는지 수동
     확인 완료 — `OnChange` 4회, 값 0→1→0→1로 실제 입력 패턴과 정확히 일치. TDD 대상
     아님 — 실제 TSF COM 콜백. (ADR-0005)
-- [ ] **IPC 클라이언트 (TIP 쪽)**
+- [x] **IPC 클라이언트 (TIP 쪽)**
   - `IpcClient.h/.cpp`: 백그라운드 워커 스레드 + 논블로킹 mailbox +
     connect-write-disconnect 파이프 클라이언트(`\\.\pipe\ingee.ImeIndicator.StateReport`).
-    `ImeStateTip`의 로그 호출을 `IpcClient_ReportState`로 교체.
-  - 검증방법: 파이프 서버(UI) 없이 앱을 켜도 멈추거나 크래시 안 하는지, 서버가 있을 때
-    실제로 메시지가 도착하는지 수동 확인. TDD 대상 아님 — Win32 파이프 I/O 글루.
-    (CLAUDE.md 4절)
+    `ImeStateTip`의 임시 로그 호출을 `IpcClient_ReportState`로 교체 완료.
+  - 검증방법: 임시 PowerShell 파이프 서버로 실제 메시지(pid, isKoreanOpen)가 정확히
+    도착하는지 확인 완료(입력 패턴과 일치하는 4개 메시지 수신). 서버를 끈 상태에서도
+    메모장이 멈추거나 크래시하지 않고 계속 응답하는지도 확인 완료. TDD 대상 아님 — Win32
+    파이프 I/O 글루. (CLAUDE.md 4절)
 - [ ] **UI 상태 판단 순수 로직 (TDD)**
   - `ForegroundStateResolver.Resolve(pid, table, lastKnown)` 테스트 먼저 작성 → 구현.
   - 검증방법: TDD로 진행, 글루 코드 없음. (CLAUDE.md 4절)

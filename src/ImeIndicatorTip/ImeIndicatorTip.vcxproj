@@ -80,12 +80,14 @@
     <ClInclude Include="DllExports.h" />
     <ClInclude Include="Guids.h" />
     <ClInclude Include="ImeStateTip.h" />
+    <ClInclude Include="IpcClient.h" />
     <ClInclude Include="Registration.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DllExports.cpp" />
     <ClCompile Include="Guids.cpp" />
     <ClCompile Include="ImeStateTip.cpp" />
+    <ClCompile Include="IpcClient.cpp" />
     <ClCompile Include="Registration.cpp" />
   </ItemGroup>
   <ItemGroup>

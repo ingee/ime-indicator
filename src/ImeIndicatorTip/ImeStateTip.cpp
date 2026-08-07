@@ -1,39 +1,6 @@
 #include "ImeStateTip.h"
 #include "DllExports.h"
-
-#include <cstdio>
-#include <ctime>
-
-// 이 항목("스레드 스코프 컴파트먼트 구독") 전용 임시 로그. 다음 워크리스트 항목(IPC
-// 클라이언트)에서 IpcClient_ReportState 호출로 교체되면 이 로그는 제거한다.
-static void Log(const wchar_t* message)
-{
-    FILE* file = nullptr;
-    if (_wfopen_s(&file, L"C:\\_tmp\\ime-indicator-tip-debug.log", L"a") == 0 && file)
-    {
-        time_t now = time(nullptr);
-        tm localNow;
-        localtime_s(&localNow, &now);
-        wchar_t timeBuf[32];
-        wcsftime(timeBuf, 32, L"%H:%M:%S", &localNow);
-        fwprintf(file, L"[%s] pid=%lu %s\n", timeBuf, GetCurrentProcessId(), message);
-        fclose(file);
-    }
-}
-
-static void LogValue(const wchar_t* prefix, const VARIANT& value)
-{
-    wchar_t buf[128];
-    if (value.vt == VT_I4)
-    {
-        swprintf_s(buf, L"%s vt=VT_I4 value=%ld", prefix, value.lVal);
-    }
-    else
-    {
-        swprintf_s(buf, L"%s vt=%d (not VT_I4)", prefix, value.vt);
-    }
-    Log(buf);
-}
+#include "IpcClient.h"
 
 ImeStateTip::ImeStateTip() : m_refCount(1), m_compartment(nullptr), m_compartmentCookie(TF_INVALID_COOKIE)
 {
@@ -87,15 +54,15 @@ STDMETHODIMP_(ULONG) ImeStateTip::Release()
 
 STDMETHODIMP ImeStateTip::Activate(ITfThreadMgr* threadMgr, TfClientId /* clientId */)
 {
-    Log(L"Activate() called");
+    IpcClient_Start();
     SubscribeThreadScopeCompartment(threadMgr);
     return S_OK;
 }
 
 STDMETHODIMP ImeStateTip::Deactivate()
 {
-    Log(L"Deactivate() called");
     UnsubscribeThreadScopeCompartment();
+    IpcClient_Stop();
     return S_OK;
 }
 
@@ -106,7 +73,6 @@ void ImeStateTip::SubscribeThreadScopeCompartment(ITfThreadMgr* threadMgr)
     ITfCompartmentMgr* compartmentMgr = nullptr;
     if (FAILED(threadMgr->QueryInterface(IID_ITfCompartmentMgr, reinterpret_cast<void**>(&compartmentMgr))) || !compartmentMgr)
     {
-        Log(L"QI(ITfThreadMgr -> ITfCompartmentMgr) failed");
         return;
     }
 
@@ -114,7 +80,6 @@ void ImeStateTip::SubscribeThreadScopeCompartment(ITfThreadMgr* threadMgr)
     compartmentMgr->Release();
     if (FAILED(hr) || !m_compartment)
     {
-        Log(L"GetCompartment(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE) failed");
         m_compartment = nullptr;
         return;
     }
@@ -160,16 +125,15 @@ void ImeStateTip::ReportCurrentValue()
 
     VARIANT value;
     VariantInit(&value);
-    if (SUCCEEDED(m_compartment->GetValue(&value)))
+    if (SUCCEEDED(m_compartment->GetValue(&value)) && value.vt == VT_I4)
     {
-        LogValue(L"THREADSCOPE value:", value);
+        IpcClient_ReportState(GetCurrentProcessId(), value.lVal != 0);
     }
     VariantClear(&value);
 }
 
 STDMETHODIMP ImeStateTip::OnChange(REFGUID /* rguid */)
 {
-    Log(L"OnChange() fired");
     ReportCurrentValue();
     return S_OK;
 }
