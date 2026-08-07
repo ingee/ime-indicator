@@ -66,11 +66,35 @@ HRESULT ImeIndicatorTip_Register(HMODULE moduleHandle)
             0);
     }
     profiles->Release();
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    // GUID_TFCAT_TIP_KEYBOARD 카테고리 등록 — 이게 없으면 일부 호스트(Excel 등)가 이 TIP을
+    // 아예 로드하지 않는 것을 실측으로 확인했다. 메모장/터미널처럼 단순한 호스트는 이
+    // 카테고리 없이도 로드했지만, Office는 더 까다롭게 검사하는 것으로 보인다.
+    ITfCategoryMgr* categoryMgr = nullptr;
+    hr = CoCreateInstance(CLSID_TF_CategoryMgr, nullptr, CLSCTX_INPROC_SERVER,
+        IID_ITfCategoryMgr, reinterpret_cast<void**>(&categoryMgr));
+    if (SUCCEEDED(hr))
+    {
+        hr = categoryMgr->RegisterCategory(CLSID_ImeIndicatorTip, GUID_TFCAT_TIP_KEYBOARD, CLSID_ImeIndicatorTip);
+        categoryMgr->Release();
+    }
     return hr;
 }
 
 HRESULT ImeIndicatorTip_Unregister()
 {
+    ITfCategoryMgr* categoryMgr = nullptr;
+    if (SUCCEEDED(CoCreateInstance(CLSID_TF_CategoryMgr, nullptr, CLSCTX_INPROC_SERVER,
+        IID_ITfCategoryMgr, reinterpret_cast<void**>(&categoryMgr))))
+    {
+        categoryMgr->UnregisterCategory(CLSID_ImeIndicatorTip, GUID_TFCAT_TIP_KEYBOARD, CLSID_ImeIndicatorTip);
+        categoryMgr->Release();
+    }
+
     ITfInputProcessorProfiles* profiles = nullptr;
     HRESULT hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_INPROC_SERVER,
         IID_ITfInputProcessorProfiles, reinterpret_cast<void**>(&profiles));
