@@ -42,31 +42,46 @@
     분리된 상태 관리 클래스/함수로 뽑아 TDD로 진행 가능 — 클릭 이벤트 자체는 그 로직을
     호출하는 얇은 연결부라 실행해서 수동으로 클릭해보는 정도로 확인한다. (CLAUDE.md 6절)
 
-## 3. TSF 연동 (핵심 로직)
+## 3. TIP + IPC 연동 (ADR-0005)
 
-- [x] **TSF COM interop 선언**
-  - GUID/vtable을 손으로 옮기다 실수하면 크래시하거나 조용히 잘못된 메서드가 호출될
-    위험이 커서, 직접 작성하는 대신 검증된 `Vanara.PInvoke.TextServicesFramework`
-    NuGet 패키지의 `ITfThreadMgr`/`ITfThreadMgrEventSink`/`ITfCompartmentMgr`/
-    `ITfCompartment`/`ITfSource`/`ITfCompartmentEventSink`/`GUID_COMPARTMENT_KEYBOARD_OPENCLOSE`
-    선언을 그대로 사용한다.
-  - 검증방법: 컴파일이 되는지, 그리고 다음 항목(스레드 매니저 초기화)에서 실제로 호출해
-    동작하는지로 간접 확인. TDD 대상 아님 — 라이브러리 선언을 그대로 참조하는 것이라
-    우리 쪽에 검증할 동작이 없음. (CLAUDE.md 4절)
-- [ ] **스레드 매니저 초기화 + 최초 상태 조회**
-  - 검증방법: 실제 앱을 띄워 시작 시 초기 화면이 현재 한/영 상태와 일치하는지 수동으로
-    확인. TDD 대상 아님 — 실제 `ITfThreadMgr` COM 객체 생성/조회라 글루 코드. 다만 이 COM
-    호출을 인터페이스(예: `ICompartmentReader`) 뒤로 감싸 두면, 아래 두 항목에서 그 인터페이스의
-    가짜 구현을 이용한 TDD가 가능해지므로 여기서 그 경계를 만들어 둔다. (CLAUDE.md 4절)
-- [ ] **포커스 전환 감지 및 컴파트먼트 구독 전환**
-  - 검증방법: 여러 앱 사이를 오가며 포커스를 바꿔보고, 각 앱의 한/영 상태가 독립적으로
-    반영되는지 수동으로 확인. TDD 대상 아님 — `OnSetFocus`에서 `UnadviseSink`/`AdviseSink`를
-    호출하는 것 자체가 실제 COM 상태 변경이라 글루 코드. (CLAUDE.md 4절, ADR-0002)
-- [ ] **컴파트먼트 변경 이벤트 연결**
-  - 검증방법: "새로 읽은 원시값 또는 조회 실패 → 다음에 표시할 상태" 판단 로직(컴파트먼트
-    없음/COM 실패 시 마지막 상태 유지, 최초엔 영문 기본값)은 COM과 분리된 순수 상태 전이
-    함수로 뽑아 TDD로 먼저 작성한다. 그 함수를 실제 `OnChange` 콜백에 연결하는 부분만
-    실행해서 수동으로 확인. (CLAUDE.md 4절)
+- [ ] **TIP DLL 뼈대 + 등록/로딩 검증**
+  - `src/ImeIndicatorTip/` 프로젝트 생성, `DllRegisterServer`/`DllUnregisterServer`/
+    `DllGetClassObject`/`DllCanUnloadNow` + 빈 `Activate`/`Deactivate`만 구현.
+  - 검증방법: `regsvr32`로 등록 후 메모장 등 실제 앱을 새로 띄워 `Activate()`가 호출되는지
+    (임시 로그로) 확인. **이 항목에서 HKCU\Software\Classes 등록이 비관리자 셸에서 실제로
+    성공하는지 반드시 확인** — 관리자 권한이 실제로 필요한지가 아직 미검증 상태(ADR-0005
+    참고). TDD 대상 아님 — COM 등록/로딩 자체가 글루.
+- [ ] **스레드 스코프 컴파트먼트 구독 (TipPoc7 로직 이식)**
+  - `ImeStateTip.cpp`에 TipPoc7의 스레드 스코프 QI + `GetCompartment` + `AdviseSink`
+    로직을 그대로 옮긴다. 아직 IPC는 연결하지 않고 임시 로그로만 확인.
+  - 검증방법: 메모장에서 한/영 반복 전환하며 로그에 값이 0/1로 정확히 토글되는지 수동
+    확인. TDD 대상 아님 — 실제 TSF COM 콜백. (ADR-0005)
+- [ ] **IPC 클라이언트 (TIP 쪽)**
+  - `IpcClient.h/.cpp`: 백그라운드 워커 스레드 + 논블로킹 mailbox +
+    connect-write-disconnect 파이프 클라이언트(`\\.\pipe\ingee.ImeIndicator.StateReport`).
+    `ImeStateTip`의 로그 호출을 `IpcClient_ReportState`로 교체.
+  - 검증방법: 파이프 서버(UI) 없이 앱을 켜도 멈추거나 크래시 안 하는지, 서버가 있을 때
+    실제로 메시지가 도착하는지 수동 확인. TDD 대상 아님 — Win32 파이프 I/O 글루.
+    (CLAUDE.md 4절)
+- [ ] **UI 상태 판단 순수 로직 (TDD)**
+  - `ForegroundStateResolver.Resolve(pid, table, lastKnown)` 테스트 먼저 작성 → 구현.
+  - 검증방법: TDD로 진행, 글루 코드 없음. (CLAUDE.md 4절)
+- [ ] **UI IPC 리스너 + 포그라운드 추적 연결**
+  - `ImeStateIpcListener`(파이프 서버 + PID→상태 테이블), `ForegroundWindowTracker`
+    (`SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` 단일 인스턴스) 구현. 둘 다 `Resolve` 호출 후
+    `IndicatorStateStore.Set`으로 반영. UI 스레드 마샬링(`SynchronizationContext`) 포함.
+  - 검증방법: 실제 TIP DLL 등록 상태로 여러 앱 사이를 오가며 한/영 상태가 정확히
+    반영되는지 수동 확인. TDD 대상 아님. (ADR-0005, CLAUDE.md 4절)
+- [ ] **Program.cs 재배선 + 구 TSF 코드 제거**
+  - `TF_CreateThreadMgr`/`TsfImeStateMonitor` 구성 코드 제거, `ICompartmentReader.cs`/
+    `TsfCompartmentReader.cs`/`TsfImeStateMonitor.cs` 삭제, `Vanara.PInvoke.TextServicesFramework`
+    패키지 참조 제거. `ForegroundWindowTracker`/`ImeStateIpcListener` 생성으로 교체.
+  - 검증방법: `dotnet build`/`dotnet test` 통과 + 앱 실행 시 크래시 없이 기본값(영문)으로
+    뜨는지 확인. TDD 대상 아님 — 배선 변경.
+- [ ] **엔드투엔드 수동 시나리오 검증**
+  - 검증방법: 메모장(Win32), Windows 11 패키지형 메모장(WinUI), 터미널 등 서로 다른 종류의
+    앱을 오가며 한/영 전환·포커스 전환·클릭 교정을 실제로 반복해 크래시 없이 정확히
+    반영되는지 확인. TDD 대상 아님. (ADR-0005, CLAUDE.md 4·6절)
 
 ## 4. 트레이 · 시작프로그램
 
@@ -90,63 +105,3 @@
   - 검증방법: `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` 실행 후
     결과 exe를 별도 .NET 런타임 없는 환경(또는 그렇다고 가정하고)에서 실행해 정상 동작하는지
     확인. TDD 대상 아님 — 빌드/배포 절차 검증. (CLAUDE.md 7절)
-
-## 마지막 세션 요약 (2026-08-07)
-
-### 오늘 완료한 작업
-
-- CLAUDE.md 재그릴링: 인디케이터 크기/여백을 실사용 피드백에 따라 36px/5px →
-  26px/2px로 재조정, DPI 배율 대응 설계 결정.
-- 멀티 모니터 배치 + DPI 스케일링 구현, 100%/125% 혼합 배율 환경에서 실측 검증
-  완료 (`feature/ime-indicator-app` 브랜치, 커밋 `0f0dcad`).
-- 클릭 반전 + 전체 동기화 구현 (`053ef5b`).
-- `Vanara.PInvoke.TextServicesFramework` 패키지 도입 (`4c49e4f`).
-- TSF 스레드 매니저 초기화 + `ITfThreadMgrEventSink`/`ITfCompartmentEventSink`
-  구독을 C#으로 구현 (`2b5e9da`, 디버그 로그 포함) — 하지만 실측 결과 **다른
-  프로세스의 포커스/컴파트먼트 변경을 전혀 감지하지 못하는 것으로 확인**됨.
-- 원인 조사 결과, 독립 EXE의 자체 `ITfThreadMgr`로는 구조적으로 다른 프로세스의
-  TSF 상태를 볼 수 없다는 결론에 도달 → TIP(Text Input Processor) 등록 방향으로
-  ADR-0003 작성, 새 브랜치 `feature/ime-state-detection`으로 이어감.
-- C++ 프로토타입(`prototype/tip-detection-poc-throwaway` 브랜치, push 완료)으로
-  TIP 방식을 실측 검증:
-  - ✅ **TIP은 실제로 다른 프로세스에 로드된다** — 등록만 해두면 사용자가 키보드로
-    선택하지 않아도 텍스트 입력을 다루는 거의 모든 프로세스에 로드되고 `Activate()`가
-    호출됨. ADR-0003의 핵심 전제는 맞았다.
-  - ❌ **하지만 `GUID_COMPARTMENT_KEYBOARD_OPENCLOSE`는 전혀 관찰되지 않는다** —
-    문서/전역/컨텍스트 세 스코프 전부, 그리고 컨텍스트에 실제로 존재하는 모든
-    컴파트먼트(4~5개)를 나열해 전부 구독해봐도, 메모장·탐색기 양쪽에서 실제
-    한/영 전환(완성된 한글 입력 확인됨)을 했는데도 값이 전혀 안 바뀌고 `OnChange`도
-    한 번도 안 옴.
-- ADR-0003을 `superseded` 표시, ADR-0004에 프로토타입 결과와 다음 방향 후보 기록.
-- PoC가 남긴 레지스트리(COM/TSF 등록) 흔적은 전부 제거 확인함(5개 CLSID 모두
-  조회 시 "찾을 수 없음"). 파일도 저장소에서 삭제, 소스만 throwaway 브랜치에 보존.
-
-### 미완료 상태로 남은 작업과 현재 상태
-
-- `CLAUDE_worklist.md`의 "3. TSF 연동" 섹션 — **"스레드 매니저 초기화 + 최초 상태
-  조회"부터 그 아래 항목들 전부 아키텍처 재검토 대기 상태.** 지금 `feature/ime-indicator-app`
-  브랜치에 있는 C# TSF 연동 코드(`TsfImeStateMonitor` 등)는 동작하지 않는 것으로
-  확인됐으므로, 체크박스는 아직 미완료(`[ ]`)로 둔다 — 새 방향이 정해지면 이
-  워크리스트 자체를 다시 써야 할 가능성이 높다.
-- 실제 Microsoft 한국어 IME가 어떤 메커니즘으로 자신의 열림/닫힘 상태를 노출하는지
-  (혹은 노출하지 않는지) 아직 못 찾음.
-
-### 다음에 시작할 지점
-
-1. `feature/ime-state-detection` 브랜치에서 이어서 시작.
-2. `docs/adr/0004-tip-prototype-inconclusive.md`의 "다음으로 검토할 만한 방향"
-   섹션부터 — 후보는 (a) 우리 TIP을 실제 활성 입력기로 전환해서 재검증(범위가
-   커짐), (b) Microsoft 한국어 IME가 실제로 쓰는 메커니즘 추가 조사, (c) TSF/TIP
-   경로 자체를 재검토(애초 동기였던 AHK의 부정확함과 다시 비교).
-3. 방향이 명확치 않으므로 `/grill-with-docs`로 다시 그릴링해서 확정 권장.
-
-### 특이사항 / 참고
-
-- `git push`는 사용자 요청으로 보류 중 — `feature/ime-state-detection`은 원격보다
-  1커밋 앞서 있음(ADR-0003/0004 커밋). `prototype/tip-detection-poc-throwaway`는
-  이미 push 완료.
-- PoC 코드/실측 로그 원본은 `prototype/tip-detection-poc-throwaway` 브랜치의
-  `prototype/tip-detection-poc/`에 그대로 남아 있음 (버전별 실험 과정 포함,
-  `README.md` 참고).
-- 커밋 메시지는 스킬 이름 언급 없이 실제 변경 내용 중심으로, 대화는 한글로 —
-  기존 메모리 규칙 계속 적용 중.

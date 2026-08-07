@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0005
+---
+
 # TIP 등록만으로는 실제 IME 상태를 관찰하지 못함 — 프로토타입으로 확인, 방향 재검토 필요
 
 ADR-0003에서 TIP(Text Input Processor) 등록으로 다른 프로세스의 한/영 상태를 감지하기로

@@ -37,30 +37,31 @@ AutoHotkey로 먼저 프로토타입을 만들어 검증했고, 이 과정에서
 
 ## 4. 핵심 기술 요구사항
 
-- 언어/런타임: C# (.NET 8), WinForms, Windows 전용 (ADR-0001)
-- 실제 테스트로 확인된 사실: 이 PC에서는 앱(창)마다 한/영 입력 상태가 **독립적으로** 유지된다.
-  따라서 전역(global) 컴파트먼트 하나만 구독하는 방식으로는 실제 포커스된 창의 상태를
-  정확히 반영할 수 없다 (ADR-0002).
-- TSF COM 인터페이스를 직접 P/Invoke 또는 COM 상호운용으로 사용:
-  - `ITfThreadMgr` (스레드 매니저 생성/초기화)
-  - `ITfThreadMgrEventSink::OnSetFocus`로 포커스 전환을 감지하고, 전환될 때마다 이전
-    컨텍스트의 컴파트먼트 구독은 `UnadviseSink`로 해제, 새로 포커스된 컨텍스트의
-    컴파트먼트는 `AdviseSink`로 새로 구독한다.
-  - `ITfCompartmentMgr` → 포커스된 컨텍스트에서 `GUID_COMPARTMENT_KEYBOARD_OPENCLOSE`
-    컴파트먼트로 한/영 켜짐·꺼짐 상태 조회 (전역 컴파트먼트가 아니라 포커스된
-    컨텍스트 기준 — ADR-0002)
-  - `ITfSource` + 컴파트먼트 이벤트 싱크(`ITfCompartmentEventSink`)를 구현한 콜백 객체를
-    `AdviseSink`로 등록하여, 상태가 바뀌는 시점에 `OnChange` 콜백으로 즉시 통지받는다.
-- **폴링 타이머를 사용하지 않는다.** 상태 갱신은 오직 TSF 콜백(컴파트먼트 변경 + 포커스
-  전환)에 의해서만 트리거된다.
-- 프로그램 시작 시 최초 1회는 현재 포커스된 컨텍스트의 상태를 조회해서 초기 화면을
-  맞춘다(이후로는 콜백에만 의존).
-- COM 호출 실패, 예외 상황에 대한 방어적 처리 포함 (크래시 없이 인디케이터가 유지되어야 함).
-- 포커스된 컨텍스트에 `GUID_COMPARTMENT_KEYBOARD_OPENCLOSE` 컴파트먼트 자체가 없는 경우
-  (텍스트 입력을 받지 않는 컨트롤에 포커스가 있는 경우 등), 혹은 COM 호출이 실패하는
-  경우에는 **화면을 건드리지 않고 마지막으로 알려진 상태를 그대로 유지**한다. 단, 프로그램
-  시작 직후처럼 "마지막으로 알려진 상태" 자체가 아직 없는 경우에는 영문 모드(파랑/"A")를
-  기본값으로 시작한다.
+- 언어/런타임: C# (.NET 8) WinForms UI 프로세스 + C++ TIP(Text Input Processor) DLL,
+  Windows 전용 (ADR-0001)
+- 실제 테스트로 확인된 사실: 이 PC에서는 앱(창)마다 한/영 입력 상태가 **독립적으로** 유지된다
+  (ADR-0002).
+- TIP DLL을 시스템에 등록해 텍스트 입력을 다루는 거의 모든 프로세스에 로드시킨다
+  (ADR-0003). 독립 프로세스 자신의 `ITfThreadMgr`로는 다른 프로세스의 TSF 상태를 볼 수
+  없기 때문이다.
+- TIP 내부에서 `ITfThreadMgr`을 `GetGlobalCompartment()`가 아니라 직접
+  `ITfCompartmentMgr`로 QueryInterface해 얻는 **스레드 스코프** 컴파트먼트로
+  `GUID_COMPARTMENT_KEYBOARD_OPENCLOSE`를 구독한다(문서/전역/컨텍스트 스코프는 관찰되지
+  않음 — ADR-0005).
+- 상태가 바뀌면 `ITfCompartmentEventSink::OnChange`로 통지받아, 그 프로세스의 PID와 함께
+  IPC(named pipe)로 UI 프로세스에 보고한다.
+- UI 프로세스는 별도로 `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)`로 현재 포커스된
+  프로세스의 PID를 추적하고, IPC로 보고받은 PID별 상태 테이블에서 그 PID의 값을 찾아
+  표시한다. 포커스 앱과 TIP 인스턴스를 매칭하는 키는 **PID**여야 한다(스레드ID는 최신
+  패키지형 앱에서 TIP 활성화 스레드와 창 소유 스레드가 달라 불일치 — ADR-0005).
+- **폴링 타이머를 사용하지 않는다.** 상태 갱신은 TSF 콜백(TIP 내부)과 OS 포커스 이벤트
+  (UI 프로세스)에 의해서만 트리거된다.
+- 각 TIP은 로드 시점(`Activate`)에 최초 1회 컴파트먼트 값을 읽어 보고한다. UI 프로세스도
+  시작 시 1회 현재 포그라운드 PID를 읽어 초기값을 채운다(이후로는 콜백/이벤트에만 의존).
+- COM 호출 실패, IPC 연결 실패 등에 대한 방어적 처리 포함 — TIP 쪽은 IPC 실패 시 조용히
+  무시하고 계속 동작, UI 쪽은 특정 PID의 보고를 아직 못 받았으면 **화면을 건드리지 않고
+  마지막으로 알려진 상태를 유지**한다. 마지막 상태 자체가 없는 시작 직후에는 영문 모드
+  (파랑/"A")를 기본값으로 시작한다.
 
 ## 5. UI 스펙
 
@@ -101,9 +102,11 @@ TSF 이벤트 기반이면 이론적으로 어긋남이 발생하지 않아야 �
 - 시작프로그램 등록: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 레지스트리 키에
   자기 자신의 실행 파일 경로를 등록하는 방식을 사용한다(관리자 권한 불필요, 로그인 시에만
   실행되면 충분). 등록/해제는 트레이 메뉴에서 토글할 수 있어야 한다.
-- 배포 형태: .NET 8 기준 **self-contained 단일 파일(single-file) exe**로 게시한다
-  (`dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true`). 사용자가
-  별도로 .NET 런타임을 설치할 필요가 없어야 한다.
+- 배포 형태: WinForms UI EXE는 .NET 8 기준 **self-contained 단일 파일(single-file)**로
+  게시한다(`dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true`). UI
+  EXE 자체 실행에는 여전히 .NET 런타임 설치가 불필요하다. 다만 TIP DLL은 별도로 COM/TSF에
+  등록하는 1회성 설치 단계가 필요하다(관리자 권한이 실제로 필요한지는 검증 중 — ADR-0005,
+  `CLAUDE_worklist.md` 참고).
 - 트레이 아이콘: 현재 한/영 상태를 반영하지 않는 고정 아이콘을 사용한다(상태 표시는
   인디케이터 창이 전담). 디자인은 `docs/assets/tray-icon-reference.png`(남색 아웃라인의
   모니터 라인아트 스타일)를 참고하되, 중앙 심볼은 느낌표(`!`) 대신 `A` 글자로 대체한다.
