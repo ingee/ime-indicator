@@ -90,3 +90,63 @@
   - 검증방법: `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` 실행 후
     결과 exe를 별도 .NET 런타임 없는 환경(또는 그렇다고 가정하고)에서 실행해 정상 동작하는지
     확인. TDD 대상 아님 — 빌드/배포 절차 검증. (CLAUDE.md 7절)
+
+## 마지막 세션 요약 (2026-08-07)
+
+### 오늘 완료한 작업
+
+- CLAUDE.md 재그릴링: 인디케이터 크기/여백을 실사용 피드백에 따라 36px/5px →
+  26px/2px로 재조정, DPI 배율 대응 설계 결정.
+- 멀티 모니터 배치 + DPI 스케일링 구현, 100%/125% 혼합 배율 환경에서 실측 검증
+  완료 (`feature/ime-indicator-app` 브랜치, 커밋 `0f0dcad`).
+- 클릭 반전 + 전체 동기화 구현 (`053ef5b`).
+- `Vanara.PInvoke.TextServicesFramework` 패키지 도입 (`4c49e4f`).
+- TSF 스레드 매니저 초기화 + `ITfThreadMgrEventSink`/`ITfCompartmentEventSink`
+  구독을 C#으로 구현 (`2b5e9da`, 디버그 로그 포함) — 하지만 실측 결과 **다른
+  프로세스의 포커스/컴파트먼트 변경을 전혀 감지하지 못하는 것으로 확인**됨.
+- 원인 조사 결과, 독립 EXE의 자체 `ITfThreadMgr`로는 구조적으로 다른 프로세스의
+  TSF 상태를 볼 수 없다는 결론에 도달 → TIP(Text Input Processor) 등록 방향으로
+  ADR-0003 작성, 새 브랜치 `feature/ime-state-detection`으로 이어감.
+- C++ 프로토타입(`prototype/tip-detection-poc-throwaway` 브랜치, push 완료)으로
+  TIP 방식을 실측 검증:
+  - ✅ **TIP은 실제로 다른 프로세스에 로드된다** — 등록만 해두면 사용자가 키보드로
+    선택하지 않아도 텍스트 입력을 다루는 거의 모든 프로세스에 로드되고 `Activate()`가
+    호출됨. ADR-0003의 핵심 전제는 맞았다.
+  - ❌ **하지만 `GUID_COMPARTMENT_KEYBOARD_OPENCLOSE`는 전혀 관찰되지 않는다** —
+    문서/전역/컨텍스트 세 스코프 전부, 그리고 컨텍스트에 실제로 존재하는 모든
+    컴파트먼트(4~5개)를 나열해 전부 구독해봐도, 메모장·탐색기 양쪽에서 실제
+    한/영 전환(완성된 한글 입력 확인됨)을 했는데도 값이 전혀 안 바뀌고 `OnChange`도
+    한 번도 안 옴.
+- ADR-0003을 `superseded` 표시, ADR-0004에 프로토타입 결과와 다음 방향 후보 기록.
+- PoC가 남긴 레지스트리(COM/TSF 등록) 흔적은 전부 제거 확인함(5개 CLSID 모두
+  조회 시 "찾을 수 없음"). 파일도 저장소에서 삭제, 소스만 throwaway 브랜치에 보존.
+
+### 미완료 상태로 남은 작업과 현재 상태
+
+- `CLAUDE_worklist.md`의 "3. TSF 연동" 섹션 — **"스레드 매니저 초기화 + 최초 상태
+  조회"부터 그 아래 항목들 전부 아키텍처 재검토 대기 상태.** 지금 `feature/ime-indicator-app`
+  브랜치에 있는 C# TSF 연동 코드(`TsfImeStateMonitor` 등)는 동작하지 않는 것으로
+  확인됐으므로, 체크박스는 아직 미완료(`[ ]`)로 둔다 — 새 방향이 정해지면 이
+  워크리스트 자체를 다시 써야 할 가능성이 높다.
+- 실제 Microsoft 한국어 IME가 어떤 메커니즘으로 자신의 열림/닫힘 상태를 노출하는지
+  (혹은 노출하지 않는지) 아직 못 찾음.
+
+### 다음에 시작할 지점
+
+1. `feature/ime-state-detection` 브랜치에서 이어서 시작.
+2. `docs/adr/0004-tip-prototype-inconclusive.md`의 "다음으로 검토할 만한 방향"
+   섹션부터 — 후보는 (a) 우리 TIP을 실제 활성 입력기로 전환해서 재검증(범위가
+   커짐), (b) Microsoft 한국어 IME가 실제로 쓰는 메커니즘 추가 조사, (c) TSF/TIP
+   경로 자체를 재검토(애초 동기였던 AHK의 부정확함과 다시 비교).
+3. 방향이 명확치 않으므로 `/grill-with-docs`로 다시 그릴링해서 확정 권장.
+
+### 특이사항 / 참고
+
+- `git push`는 사용자 요청으로 보류 중 — `feature/ime-state-detection`은 원격보다
+  1커밋 앞서 있음(ADR-0003/0004 커밋). `prototype/tip-detection-poc-throwaway`는
+  이미 push 완료.
+- PoC 코드/실측 로그 원본은 `prototype/tip-detection-poc-throwaway` 브랜치의
+  `prototype/tip-detection-poc/`에 그대로 남아 있음 (버전별 실험 과정 포함,
+  `README.md` 참고).
+- 커밋 메시지는 스킬 이름 언급 없이 실제 변경 내용 중심으로, 대화는 한글로 —
+  기존 메모리 규칙 계속 적용 중.
