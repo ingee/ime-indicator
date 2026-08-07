@@ -1,0 +1,176 @@
+[16:25:44] pid=5252 tid=20436 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[16:25:45] pid=18744 tid=14220 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[16:25:45] pid=18744 tid=14220 ClassFactory::CreateInstance() called.
+[16:25:45] pid=18744 tid=14220 Activate() called - loaded and activated in this process.
+[16:25:45] pid=18744 tid=14220 Activate: myPid=18744 myTid=14220 fgPid=5516 fgTid=8052 match=no
+[16:25:45] pid=18744 tid=14220 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108868
+[16:25:45] pid=15544 tid=8472 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[16:25:45] pid=15272 tid=10656 ClassFactory::CreateInstance() called.
+[16:25:45] pid=7352 tid=7788 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[16:25:45] pid=15272 tid=10656 Activate() called - loaded and activated in this process.
+[16:25:45] pid=22448 tid=22452 Activate() called - loaded and activated in this process.
+[16:25:45] pid=5516 tid=8052 ClassFactory::CreateInstance() called.
+[16:25:45] pid=15272 tid=10656 Activate: myPid=15272 myTid=10656 fgPid=5516 fgTid=8052 match=no
+[16:25:45] pid=7352 tid=14124 Activate() called - loaded and activated in this process.
+[16:25:45] pid=7352 tid=14300 Activate() called - loaded and activated in this process.
+[16:25:45] pid=22448 tid=22452 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108868
+[16:25:45] pid=15544 tid=8472 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108868
+[16:25:45] pid=20592 tid=21268 Activate: myPid=20592 myTid=21268 fgPid=5516 fgTid=8052 match=no
+[16:25:45] pid=7352 tid=14300 Activate: myPid=7352 myTid=14300 fgPid=5516 fgTid=8052 match=no
+[16:25:45] pid=7352 tid=14124 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108868
+[16:25:45] pid=5516 tid=8052 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108868
+[16:25:45] pid=20592 tid=21268 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108867
+[16:25:45] pid=7352 tid=7788 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108868
+[16:25:45] pid=7352 tid=14124 THREADSCOPE initial compartment value: vt=VT_I4 value=0
+[16:25:45] pid=5516 tid=8052 THREADSCOPE initial compartment value: vt=VT_I4 value=0
+[16:25:45] pid=20592 tid=21268 THREADSCOPE initial compartment value: vt=0 (not VT_I4)
+[16:25:45] pid=7352 tid=7788 THREADSCOPE initial compartment value: vt=VT_I4 value=0
+[16:25:45] pid=7352 tid=14300 THREADSCOPE initial compartment value: vt=VT_I4 value=0
+[16:25:45] pid=5516 tid=8052 THREADSCOPE AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=5
+[16:25:45] pid=7352 tid=7788 THREADSCOPE AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[16:25:45] pid=11680 tid=10572 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[16:25:45] pid=11680 tid=10572 ClassFactory::CreateInstance() called.
+[16:25:45] pid=11680 tid=10572 Activate() called - loaded and activated in this process.
+[16:25:45] pid=11680 tid=10572 Activate: myPid=11680 myTid=10572 fgPid=5516 fgTid=8052 match=no
+[16:25:45] pid=11680 tid=10572 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108867
+[16:25:45] pid=11680 tid=10572 THREADSCOPE initial compartment value: vt=0 (not VT_I4)
+[16:25:45] pid=11680 tid=10572 THREADSCOPE AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=2
+[16:25:56] pid=5516 tid=8052 OnSetFocus() fired
+[16:25:56] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=23544 fgTid=17248 match=no
+[16:25:56] pid=23544 tid=22856 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[16:25:56] pid=23544 tid=22856 ClassFactory::CreateInstance() called.
+[16:25:56] pid=23544 tid=22856 Activate() called - loaded and activated in this process.
+[16:25:56] pid=23544 tid=22856 Activate: myPid=23544 myTid=22856 fgPid=23544 fgTid=17248 match=no
+[16:25:56] pid=23544 tid=22856 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108866
+[16:25:56] pid=23544 tid=22856 THREADSCOPE initial compartment value: vt=0 (not VT_I4)
+[16:25:56] pid=23544 tid=22856 THREADSCOPE AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[16:25:56] pid=23544 tid=22856 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:25:56] pid=23544 tid=22856 OnChange: myPid=23544 myTid=22856 fgPid=23544 fgTid=17248 match=no
+[16:25:56] pid=23544 tid=22856 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:25:56] pid=23544 tid=22856 OnSetFocus() fired
+[16:25:56] pid=23544 tid=22856 OnSetFocus: myPid=23544 myTid=22856 fgPid=23544 fgTid=17248 match=no
+[16:26:04] pid=23544 tid=22856 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:26:04] pid=23544 tid=22856 OnChange: myPid=23544 myTid=22856 fgPid=23544 fgTid=17248 match=no
+[16:26:04] pid=23544 tid=22856 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:26:05] pid=23544 tid=22856 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:26:05] pid=23544 tid=22856 OnChange: myPid=23544 myTid=22856 fgPid=23544 fgTid=17248 match=no
+[16:26:05] pid=23544 tid=22856 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:26:07] pid=23544 tid=22856 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:26:07] pid=23544 tid=22856 OnChange: myPid=23544 myTid=22856 fgPid=23544 fgTid=17248 match=no
+[16:26:07] pid=23544 tid=22856 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:26:10] pid=23544 tid=22856 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:26:10] pid=23544 tid=22856 OnChange: myPid=23544 myTid=22856 fgPid=23544 fgTid=17248 match=no
+[16:26:10] pid=23544 tid=22856 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:26:20] pid=23544 tid=22856 OnSetFocus() fired
+[16:26:20] pid=23544 tid=22856 OnSetFocus: myPid=23544 myTid=22856 fgPid=5516 fgTid=8052 match=no
+[16:26:20] pid=5516 tid=8052 OnSetFocus() fired
+[16:26:20] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:26:35] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:26:35] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:26:35] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:27:20] pid=13060 tid=15560 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[16:27:42] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:27:42] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:27:42] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:27:42] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:27:42] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:27:42] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:27:44] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:27:44] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:27:44] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:27:47] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:27:47] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:27:47] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:27:50] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:27:50] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:27:50] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:27:58] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:27:58] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:27:58] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:27:59] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:27:59] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:27:59] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:30:11] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:30:11] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:30:11] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:30:17] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:30:17] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:30:17] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:30:18] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:30:18] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:30:18] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:30:21] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:30:21] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:30:21] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:30:22] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:30:22] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:30:22] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:30:32] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:30:32] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:30:32] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:32:10] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:32:10] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:32:10] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:32:31] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:32:31] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:32:31] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=0
+[16:32:47] pid=5516 tid=8052 OnSetFocus() fired
+[16:32:47] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=23544 fgTid=17248 match=no
+[16:32:47] pid=23544 tid=22856 OnSetFocus() fired
+[16:32:47] pid=23544 tid=22856 OnSetFocus: myPid=23544 myTid=22856 fgPid=23544 fgTid=17248 match=no
+[16:32:49] pid=23544 tid=22856 OnSetFocus() fired
+[16:32:49] pid=23544 tid=22856 OnSetFocus: myPid=23544 myTid=22856 fgPid=5516 fgTid=8052 match=no
+[16:32:49] pid=23544 tid=22856 Deactivate() called.
+[16:32:49] pid=5516 tid=8052 OnSetFocus() fired
+[16:32:49] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:34:03] pid=5516 tid=8052 OnSetFocus() fired
+[16:34:03] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=15544 fgTid=8472 match=no
+[16:34:06] pid=15544 tid=8472 OnSetFocus() fired
+[16:34:06] pid=15544 tid=8472 OnSetFocus: myPid=15544 myTid=8472 fgPid=15544 fgTid=8472 match=YES
+[16:34:06] pid=15544 tid=8472 OnSetFocus() fired
+[16:34:06] pid=15544 tid=8472 OnSetFocus: myPid=15544 myTid=8472 fgPid=15544 fgTid=8472 match=YES
+[16:34:06] pid=15544 tid=8472 OnSetFocus() fired
+[16:34:06] pid=15544 tid=8472 OnSetFocus: myPid=15544 myTid=8472 fgPid=15544 fgTid=8472 match=YES
+[16:34:08] pid=15544 tid=8472 OnSetFocus() fired
+[16:34:08] pid=15544 tid=8472 OnSetFocus: myPid=15544 myTid=8472 fgPid=15544 fgTid=8472 match=YES
+[16:34:08] pid=15544 tid=8472 OnSetFocus() fired
+[16:34:08] pid=15544 tid=8472 OnSetFocus: myPid=15544 myTid=8472 fgPid=15544 fgTid=8472 match=YES
+[16:34:14] pid=15544 tid=8472 OnSetFocus() fired
+[16:34:14] pid=15544 tid=8472 OnSetFocus: myPid=15544 myTid=8472 fgPid=7352 fgTid=14124 match=no
+[16:34:14] pid=7352 tid=14124 OnSetFocus() fired
+[16:34:14] pid=7352 tid=14124 OnSetFocus: myPid=7352 myTid=14124 fgPid=7352 fgTid=14124 match=YES
+[16:34:14] pid=7352 tid=14124 OnSetFocus() fired
+[16:34:14] pid=7352 tid=14124 OnSetFocus: myPid=7352 myTid=14124 fgPid=7352 fgTid=14500 match=no
+[16:34:14] pid=5516 tid=8052 OnSetFocus() fired
+[16:34:14] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:34:22] pid=5516 tid=8052 OnSetFocus() fired
+[16:34:22] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=7352 fgTid=14124 match=no
+[16:34:22] pid=7352 tid=14124 OnSetFocus() fired
+[16:34:22] pid=7352 tid=14124 OnSetFocus: myPid=7352 myTid=14124 fgPid=7352 fgTid=14124 match=YES
+[16:34:22] pid=7352 tid=14124 OnSetFocus() fired
+[16:34:22] pid=7352 tid=14124 OnSetFocus: myPid=7352 myTid=14124 fgPid=7352 fgTid=14500 match=no
+[16:34:53] pid=7352 tid=14124 OnSetFocus() fired
+[16:34:53] pid=7352 tid=14124 OnSetFocus: myPid=7352 myTid=14124 fgPid=7352 fgTid=14124 match=YES
+[16:34:53] pid=7352 tid=14124 OnSetFocus() fired
+[16:34:53] pid=7352 tid=14124 OnSetFocus: myPid=7352 myTid=14124 fgPid=7352 fgTid=14500 match=no
+[16:34:53] pid=5516 tid=8052 OnSetFocus() fired
+[16:34:53] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:36:11] pid=5516 tid=8052 OnChange() fired for {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[16:36:11] pid=5516 tid=8052 OnChange: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:36:11] pid=5516 tid=8052 OnChange THREADSCOPE value: vt=VT_I4 value=1
+[16:37:06] pid=5516 tid=8052 OnSetFocus() fired
+[16:37:06] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=15544 fgTid=8472 match=no
+[16:37:28] pid=5516 tid=8052 OnSetFocus() fired
+[16:37:28] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:37:35] pid=5516 tid=8052 OnSetFocus() fired
+[16:37:35] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=15544 fgTid=8472 match=no
+[16:38:00] pid=5516 tid=8052 OnSetFocus() fired
+[16:38:00] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
+[16:40:21] pid=5516 tid=8052 OnSetFocus() fired
+[16:40:21] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=15544 fgTid=8472 match=no
+[16:40:48] pid=7352 tid=14124 OnSetFocus() fired
+[16:40:48] pid=7352 tid=14124 OnSetFocus: myPid=7352 myTid=14124 fgPid=7352 fgTid=14124 match=YES
+[16:40:48] pid=7352 tid=14124 OnSetFocus() fired
+[16:40:48] pid=7352 tid=14124 OnSetFocus: myPid=7352 myTid=14124 fgPid=7352 fgTid=14500 match=no
+[16:40:48] pid=5516 tid=8052 OnSetFocus() fired
+[16:40:48] pid=5516 tid=8052 OnSetFocus: myPid=5516 myTid=8052 fgPid=5516 fgTid=8052 match=YES
