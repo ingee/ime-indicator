@@ -53,11 +53,13 @@
     권한이 필요하다는 뜻(ADR-0005 Update, CLAUDE.md 7절 반영 완료). `regsvr32 /u`로 등록
     해제 시 레지스트리가 깨끗이 정리되는지도 확인 완료. TDD 대상 아님 — COM 등록/로딩
     자체가 글루.
-- [ ] **스레드 스코프 컴파트먼트 구독 (TipPoc7 로직 이식)**
+- [x] **스레드 스코프 컴파트먼트 구독 (TipPoc7 로직 이식)**
   - `ImeStateTip.cpp`에 TipPoc7의 스레드 스코프 QI + `GetCompartment` + `AdviseSink`
-    로직을 그대로 옮긴다. 아직 IPC는 연결하지 않고 임시 로그로만 확인.
+    로직을 그대로 옮겼다(포커스 추적용 `ITfThreadMgrEventSink`는 제외 — UI 프로세스 책임).
+    아직 IPC는 연결하지 않고 임시 로그로만 확인.
   - 검증방법: 메모장에서 한/영 반복 전환하며 로그에 값이 0/1로 정확히 토글되는지 수동
-    확인. TDD 대상 아님 — 실제 TSF COM 콜백. (ADR-0005)
+    확인 완료 — `OnChange` 4회, 값 0→1→0→1로 실제 입력 패턴과 정확히 일치. TDD 대상
+    아님 — 실제 TSF COM 콜백. (ADR-0005)
 - [ ] **IPC 클라이언트 (TIP 쪽)**
   - `IpcClient.h/.cpp`: 백그라운드 워커 스레드 + 논블로킹 mailbox +
     connect-write-disconnect 파이프 클라이언트(`\\.\pipe\ingee.ImeIndicator.StateReport`).
