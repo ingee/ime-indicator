@@ -14,11 +14,15 @@ static class Program
 
         var forms = new List<IndicatorForm>();
 
+        // 모든 모니터의 인디케이터가 공유하는 단일 상태. 마지막으로 알려진 상태가 없는
+        // 시작 시점이므로 영문(파랑/"A")을 기본값으로 시작한다.
+        var stateStore = new IndicatorStateStore(ImeState.English);
+
         // 프로그램 시작 시 1회만 모니터 구성을 감지한다. 실행 중 모니터 추가/제거는 범위 밖.
         foreach (var screen in Screen.AllScreens)
         {
             int dpi = NativeMethods.GetDpiForBounds(screen.Bounds);
-            var form = new IndicatorForm(screen.Bounds, dpi);
+            var form = new IndicatorForm(screen.Bounds, dpi, stateStore);
             forms.Add(form);
             form.Show();
         }

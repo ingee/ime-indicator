@@ -10,6 +10,7 @@ internal sealed class IndicatorForm : Form
 
     private readonly Font _font;
     private readonly Rectangle _monitorBounds;
+    private readonly IndicatorStateStore _stateStore;
     private string _text = string.Empty;
 
     // 델리게이트를 필드로 들고 있지 않으면 GC가 수거해서 네이티브 콜백이 끊길 수 있다.
@@ -18,9 +19,12 @@ internal sealed class IndicatorForm : Form
 
     // monitorBounds: 이 인디케이터가 속한 모니터의 화면 좌표. initialDpi: 그 모니터의 최초 DPI
     // (IndicatorSettings의 크기값은 96 DPI/100% 배율 기준이라 여기서 실제 DPI로 스케일한다).
-    public IndicatorForm(Rectangle monitorBounds, int initialDpi)
+    // stateStore: 모든 모니터의 인디케이터가 공유하는 단일 상태 저장소 — 하나를 클릭해 반전시키면
+    // 이 저장소를 구독 중인 다른 모든 인디케이터도 함께 반전된다.
+    public IndicatorForm(Rectangle monitorBounds, int initialDpi, IndicatorStateStore stateStore)
     {
         _monitorBounds = monitorBounds;
+        _stateStore = stateStore;
 
         AutoScaleMode = AutoScaleMode.None;
         FormBorderStyle = FormBorderStyle.None;
@@ -38,9 +42,12 @@ internal sealed class IndicatorForm : Form
 
         ApplyDpiScaledLayout(initialDpi);
 
-        // 아직 TSF 연동 전이라 렌더링 확인용으로만 고정값을 적용한다. 이후 항목에서 실제 상태로 교체.
-        ApplyAppearance(IndicatorAppearance.For(ImeState.English));
+        ApplyAppearance(IndicatorAppearance.For(_stateStore.Current));
+        _stateStore.Changed += OnStateChanged;
+        Click += (s, e) => _stateStore.Toggle();
     }
+
+    private void OnStateChanged(ImeState state) => ApplyAppearance(IndicatorAppearance.For(state));
 
     // 크기/여백을 IndicatorSettings(96 DPI 기준)에서 주어진 DPI로 다시 스케일해 적용한다.
     private void ApplyDpiScaledLayout(int dpi)
@@ -90,6 +97,8 @@ internal sealed class IndicatorForm : Form
             NativeMethods.UnhookWinEvent(_foregroundHook);
             _foregroundHook = IntPtr.Zero;
         }
+
+        _stateStore.Changed -= OnStateChanged;
 
         base.OnHandleDestroyed(e);
     }
