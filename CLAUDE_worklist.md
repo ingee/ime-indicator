@@ -44,10 +44,15 @@
 
 ## 3. TSF 연동 (핵심 로직)
 
-- [ ] **TSF COM 인터롭 선언**
+- [x] **TSF COM interop 선언**
+  - GUID/vtable을 손으로 옮기다 실수하면 크래시하거나 조용히 잘못된 메서드가 호출될
+    위험이 커서, 직접 작성하는 대신 검증된 `Vanara.PInvoke.TextServicesFramework`
+    NuGet 패키지의 `ITfThreadMgr`/`ITfThreadMgrEventSink`/`ITfCompartmentMgr`/
+    `ITfCompartment`/`ITfSource`/`ITfCompartmentEventSink`/`GUID_COMPARTMENT_KEYBOARD_OPENCLOSE`
+    선언을 그대로 사용한다.
   - 검증방법: 컴파일이 되는지, 그리고 다음 항목(스레드 매니저 초기화)에서 실제로 호출해
-    동작하는지로 간접 확인. TDD 대상 아님 — 인터페이스/GUID 선언 자체는 동작이 없는 선언문.
-    (CLAUDE.md 4절)
+    동작하는지로 간접 확인. TDD 대상 아님 — 라이브러리 선언을 그대로 참조하는 것이라
+    우리 쪽에 검증할 동작이 없음. (CLAUDE.md 4절)
 - [ ] **스레드 매니저 초기화 + 최초 상태 조회**
   - 검증방법: 실제 앱을 띄워 시작 시 초기 화면이 현재 한/영 상태와 일치하는지 수동으로
     확인. TDD 대상 아님 — 실제 `ITfThreadMgr` COM 객체 생성/조회라 글루 코드. 다만 이 COM
