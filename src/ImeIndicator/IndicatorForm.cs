@@ -9,17 +9,22 @@ internal sealed class IndicatorForm : Form
     private const int WS_EX_NOACTIVATE = 0x08000000;
 
     private readonly Font _font;
+    private readonly Rectangle _monitorBounds;
     private string _text = string.Empty;
 
     // 델리게이트를 필드로 들고 있지 않으면 GC가 수거해서 네이티브 콜백이 끊길 수 있다.
     private readonly WinEventProc _foregroundChangedCallback;
     private IntPtr _foregroundHook;
 
-    public IndicatorForm()
+    // monitorBounds: 이 인디케이터가 속한 모니터의 화면 좌표. initialDpi: 그 모니터의 최초 DPI
+    // (IndicatorSettings의 크기값은 96 DPI/100% 배율 기준이라 여기서 실제 DPI로 스케일한다).
+    public IndicatorForm(Rectangle monitorBounds, int initialDpi)
     {
+        _monitorBounds = monitorBounds;
+
+        AutoScaleMode = AutoScaleMode.None;
         FormBorderStyle = FormBorderStyle.None;
-        ClientSize = new Size(IndicatorSettings.IndicatorSizePx, IndicatorSettings.IndicatorSizePx);
-        StartPosition = FormStartPosition.CenterScreen;
+        StartPosition = FormStartPosition.Manual;
         TopMost = true;
         ShowInTaskbar = false;
         DoubleBuffered = true;
@@ -31,8 +36,34 @@ internal sealed class IndicatorForm : Form
 
         _foregroundChangedCallback = OnForegroundWindowChanged;
 
+        ApplyDpiScaledLayout(initialDpi);
+
         // 아직 TSF 연동 전이라 렌더링 확인용으로만 고정값을 적용한다. 이후 항목에서 실제 상태로 교체.
         ApplyAppearance(IndicatorAppearance.For(ImeState.English));
+    }
+
+    // 크기/여백을 IndicatorSettings(96 DPI 기준)에서 주어진 DPI로 다시 스케일해 적용한다.
+    private void ApplyDpiScaledLayout(int dpi)
+    {
+        int sizePx = DpiScaling.Scale(IndicatorSettings.IndicatorSizePx, dpi);
+        int topMarginPx = DpiScaling.Scale(IndicatorSettings.TopMarginPx, dpi);
+
+        ClientSize = new Size(sizePx, sizePx);
+        Location = IndicatorLayout.GetPosition(_monitorBounds, sizePx, topMarginPx);
+    }
+
+    // 창 생성 중 발생하는 WM_DPICHANGED 연쇄는 값이 불안정하게 널뛰는 것이 실측으로 확인됐다
+    // (예: 정사각형이 32x47처럼 깨짐). 그 이벤트에 반응하는 대신, 앱 시작이 완전히 끝난 뒤
+    // Program.cs가 이 메서드를 한 번 호출해 우리가 직접 조회한 신뢰할 수 있는 DPI로 재보정한다.
+    internal void RefreshLayoutForCurrentMonitor()
+    {
+        int dpi = NativeMethods.GetDpiForBounds(_monitorBounds);
+        ApplyDpiScaledLayout(dpi);
+
+        // 크기가 이전과 같으면 WinForms가 리사이즈로 보지 않아 다시 그리지 않을 수 있다.
+        // 최초 페인트가 DPI 컨텍스트가 아직 불안정하던 시점에 일어났을 수 있으므로 항상
+        // 다시 그리게 강제한다.
+        Invalidate();
     }
 
     // Win+Shift+S 캡처 오버레이 같은 시스템 UI가 뜨면 다른 앱의 topmost 상태가 풀리는 경우가

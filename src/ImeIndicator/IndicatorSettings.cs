@@ -2,8 +2,8 @@ namespace ImeIndicator;
 
 internal static class IndicatorSettings
 {
-    public const int IndicatorSizePx = 36;
-    public const int TopMarginPx = 5;
+    public const int IndicatorSizePx = 26;
+    public const int TopMarginPx = 2;
 
     public static readonly Color KoreanBackColor = Color.FromArgb(0xFF, 0x00, 0x00); // #FF0000
     public static readonly Color EnglishBackColor = Color.FromArgb(0x00, 0x00, 0xFF); // #0000FF
