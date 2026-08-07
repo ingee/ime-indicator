@@ -68,9 +68,11 @@
     도착하는지 확인 완료(입력 패턴과 일치하는 4개 메시지 수신). 서버를 끈 상태에서도
     메모장이 멈추거나 크래시하지 않고 계속 응답하는지도 확인 완료. TDD 대상 아님 — Win32
     파이프 I/O 글루. (CLAUDE.md 4절)
-- [ ] **UI 상태 판단 순수 로직 (TDD)**
-  - `ForegroundStateResolver.Resolve(pid, table, lastKnown)` 테스트 먼저 작성 → 구현.
-  - 검증방법: TDD로 진행, 글루 코드 없음. (CLAUDE.md 4절)
+- [x] **UI 상태 판단 순수 로직 (TDD)**
+  - `ForegroundStateResolver.Resolve(pid, table, lastKnown)` 테스트 먼저 작성 → 구현 완료
+    (`ForegroundStateResolverTests.cs`, 5개 테스트: PID 있음/true/false, 없음(마지막 상태
+    유지), 빈 테이블).
+  - 검증방법: TDD로 진행, 글루 코드 없음. 전체 테스트 스위트 15개 통과. (CLAUDE.md 4절)
 - [ ] **UI IPC 리스너 + 포그라운드 추적 연결**
   - `ImeStateIpcListener`(파이프 서버 + PID→상태 테이블), `ForegroundWindowTracker`
     (`SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` 단일 인스턴스) 구현. 둘 다 `Resolve` 호출 후
