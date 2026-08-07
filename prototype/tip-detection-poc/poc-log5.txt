@@ -1,0 +1,145 @@
+[13:43:21] pid=15452 OnSetFocus() fired
+[13:43:21] pid=14820 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[13:43:21] pid=14820 ClassFactory::CreateInstance() called.
+[13:43:21] pid=14820 Activate() called - loaded and activated in this process.
+[13:43:21] pid=14820 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108866
+[13:43:21] pid=14820 initial GetFocus() -> null
+[13:43:21] pid=14820 GLOBAL initial compartment value: vt=0 (not VT_I4)
+[13:43:21] pid=14820 GLOBAL AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:43:22] pid=14820 OnSetFocus() fired
+[13:43:22] pid=14820 initial compartment value: vt=0 (not VT_I4)
+[13:43:22] pid=14820 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:43:22] pid=14820 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:43:22] pid=14820 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:43:22] pid=14820 ENUM[0] found compartment {D7487DBF-804E-41C5-894D-AD96FD4EEA13}
+[13:43:22] pid=14820 ENUM[0] value: vt=0 (not VT_I4)
+[13:43:22] pid=14820 ENUM[1] found compartment {C0EB60FE-473E-4A0C-BE36-52F0BC985473}
+[13:43:22] pid=14820 ENUM[1] value: vt=VT_I4 value=1
+[13:43:22] pid=14820 ENUM[2] found compartment {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[13:43:22] pid=14820 ENUM[2] value: vt=0 (not VT_I4)
+[13:43:22] pid=14820 ENUM[3] found compartment {71A5B253-1951-466B-9FBC-9C8808FA84F2}
+[13:43:22] pid=14820 ENUM[3] value: vt=0 (not VT_I4)
+[13:43:45] pid=14820 OnSetFocus() fired
+[13:43:45] pid=11984 OnSetFocus() fired
+[13:43:45] pid=11984 initial compartment value: vt=0 (not VT_I4)
+[13:43:45] pid=11984 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=4
+[13:43:45] pid=11984 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:43:45] pid=11984 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=2
+[13:43:45] pid=11984 ENUM[0] found compartment {D7487DBF-804E-41C5-894D-AD96FD4EEA13}
+[13:43:45] pid=11984 ENUM[0] value: vt=0 (not VT_I4)
+[13:43:45] pid=11984 ENUM[1] found compartment {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[13:43:45] pid=11984 ENUM[1] value: vt=0 (not VT_I4)
+[13:43:45] pid=11984 ENUM[2] found compartment {71A5B253-1951-466B-9FBC-9C8808FA84F2}
+[13:43:45] pid=11984 ENUM[2] value: vt=0 (not VT_I4)
+[13:43:45] pid=11984 ENUM[3] found compartment {B7A578D2-9332-438A-A403-4057D05C3958}
+[13:43:45] pid=11984 ENUM[3] value: vt=0 (not VT_I4)
+[13:43:45] pid=11984 ENUM[4] found compartment {85A688F7-6DC8-4F17-A83A-B11C09CDD7BF}
+[13:43:45] pid=11984 ENUM[4] value: vt=13 (not VT_I4)
+[13:43:45] pid=11984 OnSetFocus() fired
+[13:43:45] pid=15452 OnSetFocus() fired
+[13:43:45] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:43:45] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=4
+[13:43:45] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:43:45] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=5
+[13:43:45] pid=15452 ENUM[0] found compartment {D7487DBF-804E-41C5-894D-AD96FD4EEA13}
+[13:43:45] pid=15452 ENUM[0] value: vt=0 (not VT_I4)
+[13:43:45] pid=15452 ENUM[1] found compartment {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[13:43:45] pid=15452 ENUM[1] value: vt=0 (not VT_I4)
+[13:43:45] pid=15452 ENUM[2] found compartment {71A5B253-1951-466B-9FBC-9C8808FA84F2}
+[13:43:45] pid=15452 ENUM[2] value: vt=0 (not VT_I4)
+[13:43:45] pid=15452 ENUM[3] found compartment {B7A578D2-9332-438A-A403-4057D05C3958}
+[13:43:45] pid=15452 ENUM[3] value: vt=0 (not VT_I4)
+[13:43:45] pid=15452 ENUM[4] found compartment {85A688F7-6DC8-4F17-A83A-B11C09CDD7BF}
+[13:43:45] pid=15452 ENUM[4] value: vt=13 (not VT_I4)
+[13:44:39] pid=15452 OnSetFocus() fired
+[13:44:39] pid=11984 OnSetFocus() fired
+[13:44:39] pid=11984 initial compartment value: vt=0 (not VT_I4)
+[13:44:39] pid=11984 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=4
+[13:44:39] pid=11984 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:44:39] pid=11984 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=5
+[13:44:39] pid=11984 ENUM[0] found compartment {D7487DBF-804E-41C5-894D-AD96FD4EEA13}
+[13:44:39] pid=11984 ENUM[0] value: vt=0 (not VT_I4)
+[13:44:39] pid=11984 ENUM[1] found compartment {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[13:44:39] pid=11984 ENUM[1] value: vt=0 (not VT_I4)
+[13:44:39] pid=11984 ENUM[2] found compartment {71A5B253-1951-466B-9FBC-9C8808FA84F2}
+[13:44:39] pid=11984 ENUM[2] value: vt=0 (not VT_I4)
+[13:44:39] pid=11984 ENUM[3] found compartment {B7A578D2-9332-438A-A403-4057D05C3958}
+[13:44:39] pid=11984 ENUM[3] value: vt=0 (not VT_I4)
+[13:44:39] pid=11984 ENUM[4] found compartment {85A688F7-6DC8-4F17-A83A-B11C09CDD7BF}
+[13:44:39] pid=11984 ENUM[4] value: vt=13 (not VT_I4)
+[13:44:39] pid=11984 OnSetFocus() fired
+[13:44:39] pid=14820 OnSetFocus() fired
+[13:44:39] pid=14820 initial compartment value: vt=0 (not VT_I4)
+[13:44:39] pid=14820 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:44:39] pid=14820 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:44:39] pid=14820 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:44:39] pid=14820 ENUM[0] found compartment {D7487DBF-804E-41C5-894D-AD96FD4EEA13}
+[13:44:39] pid=14820 ENUM[0] value: vt=0 (not VT_I4)
+[13:44:39] pid=14820 ENUM[1] found compartment {C0EB60FE-473E-4A0C-BE36-52F0BC985473}
+[13:44:39] pid=14820 ENUM[1] value: vt=VT_I4 value=1
+[13:44:39] pid=14820 ENUM[2] found compartment {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[13:44:39] pid=14820 ENUM[2] value: vt=0 (not VT_I4)
+[13:44:39] pid=14820 ENUM[3] found compartment {71A5B253-1951-466B-9FBC-9C8808FA84F2}
+[13:44:39] pid=14820 ENUM[3] value: vt=0 (not VT_I4)
+[13:44:41] pid=14820 OnSetFocus() fired
+[13:44:44] pid=14820 OnSetFocus() fired
+[13:44:44] pid=14820 initial compartment value: vt=0 (not VT_I4)
+[13:44:44] pid=14820 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:44:44] pid=14820 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:44:44] pid=14820 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=5
+[13:44:44] pid=14820 ENUM[0] found compartment {D7487DBF-804E-41C5-894D-AD96FD4EEA13}
+[13:44:44] pid=14820 ENUM[0] value: vt=0 (not VT_I4)
+[13:44:44] pid=14820 ENUM[1] found compartment {C0EB60FE-473E-4A0C-BE36-52F0BC985473}
+[13:44:44] pid=14820 ENUM[1] value: vt=VT_I4 value=1
+[13:44:44] pid=14820 ENUM[2] found compartment {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[13:44:44] pid=14820 ENUM[2] value: vt=0 (not VT_I4)
+[13:44:44] pid=14820 ENUM[3] found compartment {71A5B253-1951-466B-9FBC-9C8808FA84F2}
+[13:44:44] pid=14820 ENUM[3] value: vt=0 (not VT_I4)
+[13:44:44] pid=14820 OnSetFocus() fired
+[13:44:45] pid=14820 OnSetFocus() fired
+[13:44:45] pid=14820 initial compartment value: vt=0 (not VT_I4)
+[13:44:45] pid=14820 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:44:45] pid=14820 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:44:45] pid=14820 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=7
+[13:44:45] pid=14820 ENUM[0] found compartment {D7487DBF-804E-41C5-894D-AD96FD4EEA13}
+[13:44:45] pid=14820 ENUM[0] value: vt=0 (not VT_I4)
+[13:44:45] pid=14820 ENUM[1] found compartment {C0EB60FE-473E-4A0C-BE36-52F0BC985473}
+[13:44:45] pid=14820 ENUM[1] value: vt=VT_I4 value=1
+[13:44:45] pid=14820 ENUM[2] found compartment {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[13:44:45] pid=14820 ENUM[2] value: vt=0 (not VT_I4)
+[13:44:45] pid=14820 ENUM[3] found compartment {71A5B253-1951-466B-9FBC-9C8808FA84F2}
+[13:44:45] pid=14820 ENUM[3] value: vt=0 (not VT_I4)
+[13:45:47] pid=14820 OnSetFocus() fired
+[13:45:47] pid=14820 Deactivate() called.
+[13:45:47] pid=15452 OnSetFocus() fired
+[13:45:47] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:45:47] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=4
+[13:45:47] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:45:47] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=8
+[13:45:47] pid=15452 ENUM[0] found compartment {D7487DBF-804E-41C5-894D-AD96FD4EEA13}
+[13:45:47] pid=15452 ENUM[0] value: vt=0 (not VT_I4)
+[13:45:47] pid=15452 ENUM[1] found compartment {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[13:45:47] pid=15452 ENUM[1] value: vt=0 (not VT_I4)
+[13:45:47] pid=15452 ENUM[2] found compartment {71A5B253-1951-466B-9FBC-9C8808FA84F2}
+[13:45:47] pid=15452 ENUM[2] value: vt=0 (not VT_I4)
+[13:45:47] pid=15452 ENUM[3] found compartment {B7A578D2-9332-438A-A403-4057D05C3958}
+[13:45:47] pid=15452 ENUM[3] value: vt=0 (not VT_I4)
+[13:45:47] pid=15452 ENUM[4] found compartment {85A688F7-6DC8-4F17-A83A-B11C09CDD7BF}
+[13:45:47] pid=15452 ENUM[4] value: vt=13 (not VT_I4)
+[13:46:35] pid=8768 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[13:46:35] pid=15452 OnSetFocus() fired
+[13:46:36] pid=15452 OnSetFocus() fired
+[13:46:36] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:46:36] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=4
+[13:46:36] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:46:36] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=11
+[13:46:36] pid=15452 ENUM[0] found compartment {D7487DBF-804E-41C5-894D-AD96FD4EEA13}
+[13:46:36] pid=15452 ENUM[0] value: vt=0 (not VT_I4)
+[13:46:36] pid=15452 ENUM[1] found compartment {58273AAD-01BB-4164-95C6-755BA0B5162D}
+[13:46:36] pid=15452 ENUM[1] value: vt=0 (not VT_I4)
+[13:46:36] pid=15452 ENUM[2] found compartment {71A5B253-1951-466B-9FBC-9C8808FA84F2}
+[13:46:36] pid=15452 ENUM[2] value: vt=0 (not VT_I4)
+[13:46:36] pid=15452 ENUM[3] found compartment {B7A578D2-9332-438A-A403-4057D05C3958}
+[13:46:36] pid=15452 ENUM[3] value: vt=0 (not VT_I4)
+[13:46:36] pid=15452 ENUM[4] found compartment {85A688F7-6DC8-4F17-A83A-B11C09CDD7BF}
+[13:46:36] pid=15452 ENUM[4] value: vt=13 (not VT_I4)

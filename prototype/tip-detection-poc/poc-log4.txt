@@ -1,0 +1,112 @@
+[13:34:14] pid=15452 OnSetFocus() fired
+[13:34:14] pid=18988 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[13:34:14] pid=18988 ClassFactory::CreateInstance() called.
+[13:34:14] pid=18988 Activate() called - loaded and activated in this process.
+[13:34:14] pid=18988 AdviseSink(ITfThreadMgrEventSink) hr=0x00000000 cookie=67108866
+[13:34:14] pid=18988 initial GetFocus() -> null
+[13:34:14] pid=18988 GLOBAL initial compartment value: vt=0 (not VT_I4)
+[13:34:14] pid=18988 GLOBAL AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:34:14] pid=18988 OnSetFocus() fired
+[13:34:14] pid=18988 initial compartment value: vt=0 (not VT_I4)
+[13:34:14] pid=18988 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:34:14] pid=18988 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:34:14] pid=18988 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:34:31] pid=18988 OnSetFocus() fired
+[13:34:31] pid=11984 OnSetFocus() fired
+[13:34:31] pid=11984 initial compartment value: vt=0 (not VT_I4)
+[13:34:31] pid=11984 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:34:31] pid=11984 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:34:31] pid=11984 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:34:31] pid=11984 OnSetFocus() fired
+[13:34:31] pid=15452 OnSetFocus() fired
+[13:34:31] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:34:31] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:34:31] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:34:31] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:35:13] pid=15452 OnSetFocus() fired
+[13:35:13] pid=18988 OnSetFocus() fired
+[13:35:13] pid=18988 initial compartment value: vt=0 (not VT_I4)
+[13:35:13] pid=18988 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:35:13] pid=18988 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:35:13] pid=18988 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:35:26] pid=18988 OnSetFocus() fired
+[13:35:26] pid=15452 OnSetFocus() fired
+[13:35:26] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:35:26] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:35:26] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:35:26] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:36:28] pid=15452 OnSetFocus() fired
+[13:36:28] pid=18988 OnSetFocus() fired
+[13:36:28] pid=18988 initial compartment value: vt=0 (not VT_I4)
+[13:36:28] pid=18988 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:36:28] pid=18988 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:36:28] pid=18988 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:36:29] pid=18988 OnSetFocus() fired
+[13:36:29] pid=18988 Deactivate() called.
+[13:36:29] pid=15452 OnSetFocus() fired
+[13:36:29] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:36:29] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:36:29] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:36:29] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:37:02] pid=15452 OnSetFocus() fired
+[13:37:18] pid=15452 OnSetFocus() fired
+[13:37:18] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:37:18] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:37:18] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:37:18] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:37:54] pid=15452 OnSetFocus() fired
+[13:37:54] pid=15452 OnSetFocus() fired
+[13:37:54] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:37:54] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:37:54] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:37:54] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:37:54] pid=15452 OnSetFocus() fired
+[13:37:54] pid=15452 OnSetFocus() fired
+[13:37:54] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:37:54] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:37:54] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:37:54] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:37:55] pid=13848 Deactivate() called.
+[13:42:27] pid=18832 DllMain(DLL_PROCESS_ATTACH) - DLL loaded into this process.
+[13:42:27] pid=15452 OnSetFocus() fired
+[13:42:29] pid=15452 OnSetFocus() fired
+[13:42:29] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:42:29] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:42:29] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:42:29] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:43:07] pid=15452 OnSetFocus() fired
+[13:43:09] pid=15452 OnSetFocus() fired
+[13:43:09] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:43:09] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:43:09] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:43:09] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:43:21] pid=15452 OnSetFocus() fired
+[13:43:45] pid=11984 OnSetFocus() fired
+[13:43:45] pid=11984 initial compartment value: vt=0 (not VT_I4)
+[13:43:45] pid=11984 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:43:45] pid=11984 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:43:45] pid=11984 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=1
+[13:43:45] pid=11984 OnSetFocus() fired
+[13:43:45] pid=15452 OnSetFocus() fired
+[13:43:45] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:43:45] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:43:45] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:43:45] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=4
+[13:44:39] pid=15452 OnSetFocus() fired
+[13:44:39] pid=11984 OnSetFocus() fired
+[13:44:39] pid=11984 initial compartment value: vt=0 (not VT_I4)
+[13:44:39] pid=11984 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:44:39] pid=11984 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:44:39] pid=11984 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=4
+[13:44:39] pid=11984 OnSetFocus() fired
+[13:45:47] pid=15452 OnSetFocus() fired
+[13:45:47] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:45:47] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:45:47] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:45:47] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=7
+[13:46:35] pid=15452 OnSetFocus() fired
+[13:46:36] pid=15452 OnSetFocus() fired
+[13:46:36] pid=15452 initial compartment value: vt=0 (not VT_I4)
+[13:46:36] pid=15452 AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=3
+[13:46:36] pid=15452 CONTEXT initial compartment value: vt=0 (not VT_I4)
+[13:46:36] pid=15452 CONTEXT AdviseSink(ITfCompartmentEventSink) hr=0x00000000 cookie=10
