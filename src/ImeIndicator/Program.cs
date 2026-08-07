@@ -1,3 +1,7 @@
+using System.Runtime.InteropServices;
+using Vanara.PInvoke;
+using static Vanara.PInvoke.MSCTF;
+
 namespace ImeIndicator;
 
 static class Program
@@ -17,6 +21,23 @@ static class Program
         // 모든 모니터의 인디케이터가 공유하는 단일 상태. 마지막으로 알려진 상태가 없는
         // 시작 시점이므로 영문(파랑/"A")을 기본값으로 시작한다.
         var stateStore = new IndicatorStateStore(ImeState.English);
+
+        // TSF 스레드 매니저 초기화 + 포커스/컴파트먼트 변경 구독. 실패해도(방어적 처리)
+        // 인디케이터는 기본값(영문)으로 계속 떠 있는다. 폴링 없이 TSF 콜백에만 의존한다.
+        try
+        {
+            HRESULT hr = TF_CreateThreadMgr(out ITfThreadMgr threadMgr);
+            System.IO.File.AppendAllText(@"C:\_tmp\indicator-debug.log", $"[{DateTime.Now:HH:mm:ss.fff}] TF_CreateThreadMgr hr={hr}\n");
+            if (hr.Succeeded)
+            {
+                threadMgr.Activate();
+                new TsfImeStateMonitor(threadMgr, stateStore).Start();
+            }
+        }
+        catch (COMException ex)
+        {
+            System.IO.File.AppendAllText(@"C:\_tmp\indicator-debug.log", $"[{DateTime.Now:HH:mm:ss.fff}] TSF init FAILED: {ex.Message} (0x{ex.HResult:X8})\n");
+        }
 
         // 프로그램 시작 시 1회만 모니터 구성을 감지한다. 실행 중 모니터 추가/제거는 범위 밖.
         foreach (var screen in Screen.AllScreens)

@@ -16,4 +16,10 @@ internal sealed class IndicatorStateStore
         Current = Current == ImeState.Korean ? ImeState.English : ImeState.Korean;
         Changed?.Invoke(Current);
     }
+
+    public void Set(ImeState newState)
+    {
+        Current = newState;
+        Changed?.Invoke(Current);
+    }
 }
