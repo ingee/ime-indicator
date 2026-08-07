@@ -1,7 +1,3 @@
-using System.Runtime.InteropServices;
-using Vanara.PInvoke;
-using static Vanara.PInvoke.MSCTF;
-
 namespace ImeIndicator;
 
 static class Program
@@ -22,23 +18,6 @@ static class Program
         // 시작 시점이므로 영문(파랑/"A")을 기본값으로 시작한다.
         var stateStore = new IndicatorStateStore(ImeState.English);
 
-        // TSF 스레드 매니저 초기화 + 포커스/컴파트먼트 변경 구독. 실패해도(방어적 처리)
-        // 인디케이터는 기본값(영문)으로 계속 떠 있는다. 폴링 없이 TSF 콜백에만 의존한다.
-        try
-        {
-            HRESULT hr = TF_CreateThreadMgr(out ITfThreadMgr threadMgr);
-            System.IO.File.AppendAllText(@"C:\_tmp\indicator-debug.log", $"[{DateTime.Now:HH:mm:ss.fff}] TF_CreateThreadMgr hr={hr}\n");
-            if (hr.Succeeded)
-            {
-                threadMgr.Activate();
-                new TsfImeStateMonitor(threadMgr, stateStore).Start();
-            }
-        }
-        catch (COMException ex)
-        {
-            System.IO.File.AppendAllText(@"C:\_tmp\indicator-debug.log", $"[{DateTime.Now:HH:mm:ss.fff}] TSF init FAILED: {ex.Message} (0x{ex.HResult:X8})\n");
-        }
-
         // 프로그램 시작 시 1회만 모니터 구성을 감지한다. 실행 중 모니터 추가/제거는 범위 밖.
         foreach (var screen in Screen.AllScreens)
         {
@@ -46,6 +25,23 @@ static class Program
             var form = new IndicatorForm(screen.Bounds, dpi, stateStore);
             forms.Add(form);
             form.Show();
+        }
+
+        // 폼을 최소 하나 이상 만든 뒤라 WindowsFormsSynchronizationContext가 이미 설치돼
+        // 있다. IPC 리스너는 백그라운드 스레드에서 파이프 메시지를 받으므로, WinForms 컨트롤을
+        // 건드리는 상태 반영은 이 컨텍스트로 마샬링해 UI 스레드에서만 실행되게 한다.
+        var uiContext = SynchronizationContext.Current;
+        var foregroundTracker = new ForegroundWindowTracker();
+
+        // TIP DLL이 아직 등록되지 않았거나 파이프 서버를 못 띄워도(방어적 처리) 인디케이터는
+        // 기본값(영문)으로 계속 떠 있는다. 상태 갱신은 오직 IPC 메시지 + 포커스 전환 이벤트로만
+        // 트리거된다 — 폴링 없음.
+        try
+        {
+            new ImeStateIpcListener(stateStore, foregroundTracker, uiContext).Start();
+        }
+        catch (IOException)
+        {
         }
 
         // 창 생성 도중의 DPI 협상 과정(WM_DPICHANGED 연쇄)이 불안정한 것으로 확인되어,

@@ -66,13 +66,7 @@ internal static class NativeMethods
     internal static extern IntPtr GetForegroundWindow();
 
     [DllImport("user32.dll")]
-    internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr lpdwProcessId);
-
-    [DllImport("kernel32.dll")]
-    internal static extern uint GetCurrentThreadId();
-
-    [DllImport("user32.dll")]
-    internal static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, [MarshalAs(UnmanagedType.Bool)] bool fAttach);
+    internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
 
     // 주어진 화면 영역이 속한 모니터의 실제 DPI를 조회한다. 조회에 실패하면 96(100%)으로 간주한다.
     internal static int GetDpiForBounds(Rectangle bounds)

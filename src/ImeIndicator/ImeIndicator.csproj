@@ -9,8 +9,4 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Vanara.PInvoke.TextServicesFramework" Version="5.0.5" />
-  </ItemGroup>
-
 </Project>

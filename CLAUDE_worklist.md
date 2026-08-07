@@ -73,18 +73,20 @@
     (`ForegroundStateResolverTests.cs`, 5개 테스트: PID 있음/true/false, 없음(마지막 상태
     유지), 빈 테이블).
   - 검증방법: TDD로 진행, 글루 코드 없음. 전체 테스트 스위트 15개 통과. (CLAUDE.md 4절)
-- [ ] **UI IPC 리스너 + 포그라운드 추적 연결**
+- [x] **UI IPC 리스너 + 포그라운드 추적 연결**
   - `ImeStateIpcListener`(파이프 서버 + PID→상태 테이블), `ForegroundWindowTracker`
     (`SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` 단일 인스턴스) 구현. 둘 다 `Resolve` 호출 후
     `IndicatorStateStore.Set`으로 반영. UI 스레드 마샬링(`SynchronizationContext`) 포함.
-  - 검증방법: 실제 TIP DLL 등록 상태로 여러 앱 사이를 오가며 한/영 상태가 정확히
-    반영되는지 수동 확인. TDD 대상 아님. (ADR-0005, CLAUDE.md 4절)
-- [ ] **Program.cs 재배선 + 구 TSF 코드 제거**
+  - 검증방법: 실제 TIP DLL 등록 상태로 메모장에서 한/영 전환 시 인디케이터 창이 실제로
+    바뀌는지 수동 확인 완료(사용자 확인). TDD 대상 아님. (ADR-0005, CLAUDE.md 4절)
+- [x] **Program.cs 재배선 + 구 TSF 코드 제거**
   - `TF_CreateThreadMgr`/`TsfImeStateMonitor` 구성 코드 제거, `ICompartmentReader.cs`/
     `TsfCompartmentReader.cs`/`TsfImeStateMonitor.cs` 삭제, `Vanara.PInvoke.TextServicesFramework`
     패키지 참조 제거. `ForegroundWindowTracker`/`ImeStateIpcListener` 생성으로 교체.
-  - 검증방법: `dotnet build`/`dotnet test` 통과 + 앱 실행 시 크래시 없이 기본값(영문)으로
-    뜨는지 확인. TDD 대상 아님 — 배선 변경.
+  - 검증방법: `dotnet build`/`dotnet test` 통과(15개 테스트 전부 통과) + 앱 실행 시 크래시
+    없이 기본값(영문)으로 뜨는 것, TIP 등록 후 실제 상태 반영까지 확인 완료. TDD 대상
+    아님 — 배선 변경. (참고: `dotnet build`는 `ImeIndicatorTip.vcxproj`를 함께 못 빌드하므로
+    C#/C++ 프로젝트를 각각 따로 빌드해야 함 — `.slnx` 단일 빌드는 후속 과제로 남김.)
 - [ ] **엔드투엔드 수동 시나리오 검증**
   - 검증방법: 메모장(Win32), Windows 11 패키지형 메모장(WinUI), 터미널 등 서로 다른 종류의
     앱을 오가며 한/영 전환·포커스 전환·클릭 교정을 실제로 반복해 크래시 없이 정확히
