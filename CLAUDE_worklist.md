@@ -90,15 +90,42 @@
 - [ ] **엔드투엔드 수동 시나리오 검증** — 진행 중, 완료 아님
   - 메모장(Win32), Notepad++, mintty, Windows 11 패키지형 메모장(WinUI)은 정확히 반영됨
     확인(새로 뜬 프로세스 기준). 하지만 **`cmd.exe`(클래식 콘솔)와 Excel에서 반영되지
-    않는 문제를 발견 — 아직 미해결.** 모든 앱에서 정확히 표시되지 않으면 인디케이터
-    자체의 목적(CLAUDE.md 3절 "오차 없이" 목표)을 달성하지 못하므로, 이 두 문제를 해결하기
-    전까지는 이 항목을 완료로 볼 수 없다.
-  - 원인 조사 결과는 ADR-0005 Update에 기록: (1) `cmd.exe`는 보이는 창 PID와 실제 TIP
-    로드 프로세스(`conhost.exe`)가 달라 구조적으로 매칭 실패, (2) Excel은
-    `GUID_TFCAT_TIP_KEYBOARD` 카테고리 등록 후에도 TIP `Activate()` 자체가 안 옴(원인 미규명).
-  - 다음 시도할 것: `conhost.exe` 케이스는 포그라운드 프로세스가 콘솔 호스트 클라이언트일 때
-    연결된 `conhost.exe`를 추가로 찾아 매칭하는 방법 검토. Excel은 더 깊은 진단(Process
-    Monitor 급 도구, 또는 Office의 텍스트 서비스 통합 방식 추가 조사) 필요.
+    않는 문제를 발견** — 원인 조사는 ADR-0005 Update, 해결 방향 결정은 wayfinder 맵
+    (`.scratch/ime-focus-accuracy/`) 거쳐 **ADR-0006**으로 확정됨(2026-08-08). 아래 하위
+    항목들을 구현·검증해야 이 항목을 완료로 볼 수 있다.
+
+- [ ] **TIP: TSF 포커스 신호(`OnSetFocus`) 구독 + IPC 보고 (ADR-0006)**
+  - `ImeStateTip.cpp`에 `ITfThreadMgrEventSink`(`OnSetFocus`) 구독 추가 — 컴파트먼트 구독과
+    같은 `threadMgr`에 `AdviseSink`. `pdimFocus != NULL`이면 "포커스 획득", `NULL`이면
+    "포커스 상실"을 타임스탬프와 함께 `IpcClient`로 보고(메시지 포맷 확장 필요).
+  - 검증방법: 메모장 등 기존에 정상 동작하던 앱에서 포커스 전환 시 새 메시지가 오는지,
+    기존 컴파트먼트 보고를 깨뜨리지 않는지 수동 확인. **`conhost.exe`(`cmd.exe` 실행 후)에서
+    `OnSetFocus`가 실제로 발화하는지가 이 항목의 핵심 검증 포인트**(리서치에서 미검증으로
+    남김 — `.scratch/ime-focus-accuracy/issues/01-tsf-native-focus-signal.md`) — 여기서
+    발화 안 하면 ADR-0006 자체를 재검토해야 하므로 최우선으로 확인한다. TDD 대상 아님 —
+    실제 TSF COM 콜백.
+- [ ] **UI: 포커스 신호 병합 우선순위 로직 (TDD)**
+  - "`SetWinEventHook` PID + 상태 테이블 + 포커스 신호(PID·타임스탬프) → 표시할 PID" 판단을
+    순수 함수로 뽑아 TDD로 진행(`ForegroundStateResolver` 확장 또는 별도 함수). 테이블에
+    그 PID가 없거나, 더 최근 "포커스 획득"을 보고한 다른 PID가 있으면 그쪽을 우선한다.
+  - 검증방법: TDD로 우선순위 규칙(테이블에 있음/없음 × 포커스 신호 있음/없음/더 최신임)을
+    표로 짜서 테스트. `ImeStateIpcListener`에 연결하는 배선 자체는 글루.
+- [ ] **`cmd.exe` 반영 확인**
+  - 위 두 항목 구현 후, `cmd.exe`에서 한/영 전환 시 인디케이터가 정확히 반영되는지 수동
+    확인. TDD 대상 아님.
+- [ ] **Excel: `TF_IPPMF_ENABLEPROFILE` 저위험 실험 (ADR-0006)**
+  - `Registration.cpp`(또는 별도 초기화 경로)에서 `ITfInputProcessorProfileMgr::RegisterProfile`
+    + `ActivateProfile(..., TF_IPPMF_ENABLEPROFILE)` 호출을 추가한다 — 선택 전환
+    (`TF_IPPMF_FORPROCESS`/`FORSESSION`)은 절대 쓰지 않는다(CLAUDE.md 3절 비목표).
+  - 검증방법: Excel 셀 편집 중 한/영 전환 시 `Activate()`가 호출되는지 수동 확인. **성공하면**
+    아래 재검증 항목으로 넘어간다. **실패하면 이 항목을 완료 처리하지 않고, 코드는 롤백하지
+    말고 그대로 둔 채 사용자와 다음 방안을 상의한다**(ADR-0006 — 실패해도 자동으로 "알려진
+    제약"으로 확정하지 않음). TDD 대상 아님 — 실제 TSF 등록/활성화 글루.
+- [ ] **엔드투엔드 수동 시나리오 재검증**
+  - 위 항목들이 끝나면(Excel은 성공했거나, 상의 후 별도 결론이 났으면) 메모장·Notepad++·
+    mintty·패키지형 메모장·`cmd.exe`·Excel을 다시 한 번씩 오가며 전부 정확히 반영되는지
+    최종 확인한다. 전부 통과해야 이 항목과 위 "엔드투엔드 수동 시나리오 검증" 항목을 모두
+    완료로 표시한다.
 
 ## 4. 트레이 · 시작프로그램
 
@@ -122,96 +149,3 @@
   - 검증방법: `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` 실행 후
     결과 exe를 별도 .NET 런타임 없는 환경(또는 그렇다고 가정하고)에서 실행해 정상 동작하는지
     확인. TDD 대상 아님 — 빌드/배포 절차 검증. (CLAUDE.md 7절)
-
-## 마지막 세션 요약 (2026-08-07)
-
-### 오늘 완료한 작업
-
-- ADR-0005 신설(스레드 스코프 컴파트먼트 + PID 매칭), ADR-0004는 superseded로 표시.
-- `CLAUDE.md` 4·7절을 TIP DLL + IPC + UI 쪽 포그라운드 PID 추적 아키텍처로 재작성,
-  `CLAUDE_worklist.md` 3절을 그 아키텍처 기준 체크리스트로 재작성.
-- `src/ImeIndicatorTip/`(C++ vcxproj, `ImeIndicator.slnx`에 통합) 신규 구현:
-  - TIP DLL 뼈대(`DllExports`/`Registration`/`Guids`) — HKCU 등록은 COM은 되지만 TSF가
-    로드 안 한다는 것, HKLM 등록해야 실제 로드된다는 것(=관리자 권한 필요)을 실측 확정.
-  - `ImeStateTip.cpp`: `ITfThreadMgr`를 `GetGlobalCompartment()` 없이 직접
-    `ITfCompartmentMgr`로 QI하는 스레드 스코프 구독(TipPoc7 로직 이식) — 메모장 실측으로
-    검증 완료.
-  - `IpcClient.h/.cpp`: 워커 스레드 + 논블로킹 mailbox + connect-write-disconnect named
-    pipe(`\\.\pipe\ingee.ImeIndicator.StateReport`) 클라이언트. 서버 없어도 호스트 앱이
-    멈추지 않는 것 확인.
-- C# 쪽(`src/ImeIndicator/`) 신규/변경:
-  - `ForegroundStateResolver`(TDD, 5개 테스트) — PID→상태 판단 순수 로직.
-  - `ForegroundWindowTracker`(`SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` 단일 인스턴스),
-    `ImeStateIpcListener`(파이프 서버 + PID 테이블 + UI 스레드 마샬링) 신규.
-  - `Program.cs` 재배선, 옛 TSF 코드(`ICompartmentReader`/`TsfCompartmentReader`/
-    `TsfImeStateMonitor`, `Vanara.PInvoke.TextServicesFramework` 참조) 삭제.
-  - 전체 테스트 15개 통과, 빌드 성공.
-- 커밋 6개 완료(`c8c695b`~`38544d5`, 워크리스트 3절 항목 1~6 각각 하나씩).
-- 엔드투엔드 수동 테스트 중 **중대한 미해결 문제 2건 발견**(아래 참고) — 사용자가 "모든
-  앱에서 올바르게 표시되지 않으면 인디케이터 자체가 쓸모없다"고 명확히 지적, 이 문제
-  해결이 다음 세션 최우선순위.
-
-### 미완료 상태로 남은 작업과 현재 상태
-
-- **워크리스트 3절 마지막 항목("엔드투엔드 수동 시나리오 검증")이 미완료.** 메모장(Win32),
-  Notepad++, mintty, Windows 11 패키지형 메모장(새로 뜬 프로세스 기준)은 정확히 반영되지만:
-  1. **`cmd.exe`(클래식 콘솔) 미반영** — 원인 규명됨: `GetForegroundWindow()`가 돌려주는
-     보이는 창의 PID는 `cmd.exe` 자신이지만, 실제 TIP이 로드되고 정확한 값을 보고하는
-     프로세스는 별도의 `conhost.exe`다. 둘의 PID가 달라 UI 쪽 PID 매칭이 구조적으로 실패.
-     Windows Terminal·mintty처럼 자체 창을 그리는 터미널에는 해당 없음.
-  2. **Excel 미반영** — 원인 미규명. 셀 편집 모드에서 실제 입력해도 TIP의 `Activate()`
-     자체가 안 옴. `ITfCategoryMgr::RegisterCategory(GUID_TFCAT_TIP_KEYBOARD)` 카테고리
-     등록을 추가해봤지만(다른 앱들은 이 카테고리 없이도 로드됐었음) 결과 동일 — 단순
-     등록 누락이 아닌 것으로 보임. 이 카테고리 등록 코드 자체는 정당한 개선이라 유지.
-  - 두 경우 다 크래시는 없음(CLAUDE.md 4절 "마지막 상태 유지" 방어 규칙대로 동작) — 다만
-    화면에 틀린 상태가 계속 떠 있을 수 있다는 게 문제.
-- **커밋 안 된 변경 있음**(`git status`): `CLAUDE.md`(3절에 "알려진 제약" 문단 추가),
-  `CLAUDE_worklist.md`(이 요약 + 3절 마지막 항목 미완료로 수정), `docs/adr/0005-*.md`
-  (Update 섹션 2개 추가 — 관리자 권한 확정 건, 엔드투엔드에서 발견한 제약 2건),
-  `src/ImeIndicatorTip/Registration.cpp`(`GUID_TFCAT_TIP_KEYBOARD` 카테고리 등록 추가).
-  다음 세션에서 커밋할지, 아니면 conhost/Excel 문제를 마저 해결한 뒤 한 번에 커밋할지
-  판단 필요.
-- TIP 레지스트리 등록은 세션 종료 시점에 확인 완료 — 등록 흔적 없음(`regsvr32 /u`까지
-  전부 정리됨). 실행 중인 `ImeIndicator.exe`도 없음.
-
-### 다음에 시작할 지점
-
-1. **`conhost.exe` 매칭 문제부터 재개.** 중단된 지점: `cmd.exe`와 `conhost.exe`의
-   부모/자식 프로세스 관계(`Win32_Process`의 `ParentProcessId`)를 확인해서 안정적으로
-   매칭할 방법이 있는지 조사하려던 참이었음(PowerShell 명령 실행 직전에 세션 중단).
-   - 확인할 것: `conhost.exe`가 `cmd.exe`의 자식인지 부모인지, 혹은 둘 다 아닌 제3의
-     프로세스(csrss 등)의 자식으로 형제 관계인지. 관계가 안정적이면
-     `ForegroundStateResolver`/`ImeStateIpcListener` 쪽에 "포그라운드 PID가 테이블에
-     없고 콘솔 클래스 창(`GetClassName` == `"ConsoleWindowClass"`)이면, 관련
-     `conhost.exe` PID들도 찾아서 그중 테이블에 있는 걸 대신 사용" 같은 폴백 로직을
-     추가하는 방향 검토.
-   - 대안도 열어둘 것: 프로세스 관계로 안정적으로 못 찾으면, PowerShell/도구로 실측
-     가능한 다른 방법(`GetConsoleProcessList` 등)도 고려.
-2. **Excel 문제는 더 깊은 진단 필요.** Process Monitor급 도구가 없다면, 적어도 Office의
-   TSF 통합 방식에 대한 배경 조사(리버스 엔지니어링 대신 문서/커뮤니티 자료 조사)부터
-   시작하는 게 나을 수 있음 — `ITfInputProcessorProfileMgr`를 통한 더 정식적인 활성화
-   경로(`ActivateProfile`)가 필요한 건 아닌지 등.
-3. 두 문제 중 하나라도 해결되면 그 즉시 워크리스트 3절 마지막 항목 재검증하고 완료 표시,
-   커밋.
-
-### 특이사항 / 참고
-
-- **핵심 교훈(사용자 피드백)**: "알려진 제약"으로 문서화하고 다음으로 넘어가려 했다가
-  거부당함 — 이 프로젝트에서 "모든 앱에서 정확히 표시"는 타협 불가능한 핵심 목표
-  (CLAUDE.md 3절)이므로, 특정 앱 카테고리에서 안 되는 문제를 "제약"으로 남겨두고
-  완료 처리하지 말 것. 완전히 해결하거나, 최소한 해결 시도를 계속할 것.
-- TIP DLL 개발 중 흔한 마찰: 빌드한 DLL이 이미 로드해간 다른 프로세스(foobar2000, Edge,
-  Epic Games Launcher 등)가 있으면 재빌드 시 `LNK1168`(쓰기용으로 열 수 없음)로 실패함.
-  `/p:TargetName=<임시이름>`으로 다른 파일명으로 빌드해 우회하는 패턴을 계속 씀 — 최종
-  정식 이름(`ImeIndicatorTip.dll`)으로 재빌드하려면 그 잠금 프로세스들을 언젠가 종료해야
-  할 수 있음(사용자 앱이라 함부로 안 건드림).
-- Windows 11 메모장은 단일 인스턴스라 "새로 띄운 창"이 기존 창 재사용일 수 있음 —
-  테스트 때마다 `Get-Process notepad | Select MainWindowHandle`로 실제 새 프로세스인지
-  확인하는 습관 필요.
-- 시스템에 등록되는 자원 이름은 `ingee`로 시작하는 규칙 계속 적용 중(파이프 이름, TIP
-  표시 이름). 이 규칙은 메모리에도 저장돼 있음.
-- `dotnet build`가 `ImeIndicatorTip.vcxproj`를 함께 못 빌드함(C++ MSBuild 타깃 필요) —
-  C#은 `dotnet build`/`dotnet test`로, C++은 `MSBuild.exe`로 각각 따로 빌드해야 함.
-  `.slnx` 단일 명령 빌드는 아직 미해결 후속 과제.
-- 커밋 메시지는 스킬 이름 언급 없이 실제 변경 내용 중심으로, 대화는 한글로 — 기존
-  메모리 규칙 계속 적용 중.
