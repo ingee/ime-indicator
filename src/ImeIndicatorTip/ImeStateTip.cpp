@@ -2,6 +2,20 @@
 #include "DllExports.h"
 #include "IpcClient.h"
 
+#include <cstdio>
+
+// TEMP DIAG (2026-08-09): Notepad 회귀 원인 조사용 — Activate() 자체가 호출되는지부터 확인.
+// 진단 끝나면 제거할 것.
+static void DiagLog(const char* message)
+{
+    FILE* file = nullptr;
+    if (fopen_s(&file, "C:\\_data\\git\\ime-indicator\\.scratch\\ime_tip_debug.log", "a") == 0 && file)
+    {
+        fprintf(file, "[pid=%lu] %s\n", GetCurrentProcessId(), message);
+        fclose(file);
+    }
+}
+
 ImeStateTip::ImeStateTip() : m_refCount(1), m_compartment(nullptr), m_compartmentCookie(TF_INVALID_COOKIE)
 {
     DllExports_AddDllRef();
@@ -54,6 +68,7 @@ STDMETHODIMP_(ULONG) ImeStateTip::Release()
 
 STDMETHODIMP ImeStateTip::Activate(ITfThreadMgr* threadMgr, TfClientId /* clientId */)
 {
+    DiagLog("Activate() called");
     IpcClient_Start();
     SubscribeThreadScopeCompartment(threadMgr);
     return S_OK;
@@ -73,6 +88,7 @@ void ImeStateTip::SubscribeThreadScopeCompartment(ITfThreadMgr* threadMgr)
     ITfCompartmentMgr* compartmentMgr = nullptr;
     if (FAILED(threadMgr->QueryInterface(IID_ITfCompartmentMgr, reinterpret_cast<void**>(&compartmentMgr))) || !compartmentMgr)
     {
+        DiagLog("QueryInterface(ITfCompartmentMgr) failed");
         return;
     }
 
@@ -80,9 +96,11 @@ void ImeStateTip::SubscribeThreadScopeCompartment(ITfThreadMgr* threadMgr)
     compartmentMgr->Release();
     if (FAILED(hr) || !m_compartment)
     {
+        DiagLog("GetCompartment failed");
         m_compartment = nullptr;
         return;
     }
+    DiagLog("compartment subscribed OK");
 
     ReportCurrentValue();
 
@@ -125,15 +143,26 @@ void ImeStateTip::ReportCurrentValue()
 
     VARIANT value;
     VariantInit(&value);
-    if (SUCCEEDED(m_compartment->GetValue(&value)) && value.vt == VT_I4)
+    HRESULT hr = m_compartment->GetValue(&value);
+    if (SUCCEEDED(hr) && value.vt == VT_I4)
     {
+        char msg[64];
+        sprintf_s(msg, "ReportCurrentValue: isKoreanOpen=%d", value.lVal != 0);
+        DiagLog(msg);
         IpcClient_ReportState(GetCurrentProcessId(), value.lVal != 0);
+    }
+    else
+    {
+        char msg[64];
+        sprintf_s(msg, "GetValue failed or wrong vt (hr=0x%08lX, vt=%d)", hr, value.vt);
+        DiagLog(msg);
     }
     VariantClear(&value);
 }
 
 STDMETHODIMP ImeStateTip::OnChange(REFGUID /* rguid */)
 {
+    DiagLog("OnChange() called");
     ReportCurrentValue();
     return S_OK;
 }

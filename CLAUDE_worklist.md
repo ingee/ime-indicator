@@ -150,117 +150,102 @@
     결과 exe를 별도 .NET 런타임 없는 환경(또는 그렇다고 가정하고)에서 실행해 정상 동작하는지
     확인. TDD 대상 아님 — 빌드/배포 절차 검증. (CLAUDE.md 7절)
 
-## 마지막 세션 요약 (2026-08-08)
+## 마지막 세션 요약 (2026-08-09)
 
 ### 오늘 완료한 작업
 
-이번 세션은 **순수하게 결정 단계**였다 — 코드 구현은 하나도 하지 않았고, `cmd.exe`/Excel
-미반영 문제(전 세션에서 미해결로 남김)를 어떻게 해결할지 조사하고 확정하는 데 집중했다.
+`Activate()`가 Notepad/Notepad++ 어디에서도 호출되지 않는 핵심 회귀를 계속 조사한 하루.
+결론(완전 해결)까지는 못 갔지만, 유력한 가설 하나를 기각하고 새 가설 하나를 좁혔다.
 
-- 실측으로 ADR-0005의 기존 진단을 재확인: `cmd.exe`를 강제 포그라운드에 놓고
-  `GetForegroundWindow`/`GetWindowThreadProcessId`를 직접 호출한 결과, 보이는 콘솔 창의
-  소유 PID는 여전히 `conhost.exe`가 아니라 `cmd.exe` 자신이었다(조사 중 나온 "사실은 우리
-  코드 버그일 수도 있다"는 가설을 기각).
-- 사용자가 "앱마다 특이 케이스를 패치하는 접근이 빈틈이 많다"고 지적 → "Windows 자체
-  입력 표시기는 모든 앱에서 어떻게 정확히 동작하는가"를 근본 질문으로 재설정.
-  Background agent로 조사한 결과(Google Project Zero, Tavis Ormandy 2019 등), Windows
-  자체도 "프로세스마다 클라이언트 주입 + 중앙 relay" 패턴을 쓴다는 것을 확인 — 우리
-  TIP 주입 아키텍처 자체는 정당했고, 문제는 "UI가 포커스를 판단하는 방법"에 있다는 쪽으로
-  좁혀졌다.
-- 사용자가 Windows 입력 표시기 스크린샷 2장 제공(`win-ime.png`: 정상 상태, `win-ime2.png`:
-  포커스 없을 때의 "X" 상태) — 후자는 검토 후 "제3의 UI 상태" 후보로 논의했지만 구현
-  용이성을 이유로 기각(현재 "마지막 상태 유지" 방식 그대로 유지, CLAUDE.md 5절 변경 없음).
-- 사용자가 Excel(Office 2010)에서 직접 실측: 셀 편집 중에도 Windows 자체 입력 표시기는
-  정확히 전환됨을 확인 — 이걸로 "Excel은 TSF를 아예 안 탄다"는 가설이 기각되고, "Excel도
-  TSF는 타지만 우리 TIP만 `Activate()`가 안 된다"는 훨씬 좁고 풀 만한 문제로 재정의됨.
-- `/wayfinder` 스킬로 destination을 그릴링(Q1~Q6)으로 확정하고, wayfinder 맵
-  `.scratch/ime-focus-accuracy/`를 만들어 리서치 티켓 2개를 병렬 background subagent로
-  조사·해결:
-  - 티켓 01(`issues/01-tsf-native-focus-signal.md`): TIP이 `ITfThreadMgrEventSink::OnSetFocus`도
-    함께 구독해 IPC로 포커스 획득/상실을 보고하는 안 — 채택(병행/보완, `SetWinEventHook`
-    완전 대체 아님). 전문은 `docs/research/tsf-native-focus-signal.md`
-    (브랜치 `research/tsf-native-focus-signal`, 커밋 `f1c88b0`).
-  - 티켓 02(`issues/02-office-tip-activation-gap.md`): Excel이 우리 TIP을 왜 `Activate()`
-    안 하는지 — 근본 원인 미확정(Excel 내부 비공개), `TF_IPPMF_ENABLEPROFILE` 저위험 실험
-    권고. 전문은 `docs/research/office-tip-activation-gap.md`
-    (브랜치 `research/office-tip-activation-gap`, 커밋 `0d59687`).
-  - 두 subagent가 만든 리서치 브랜치가 프로젝트 실제 히스토리와 무관한 orphan 커밋을
-    베이스로 만들어져 있어서, 임시 worktree로 각각 `feature/ime-state-detection` 위에
-    다시 커밋해 바로잡았다(subagent의 worktree 격리 정책 한계로 보임 — 다음에 비슷한 작업
-    시킬 때 참고).
-  - 사용자가 두 결론을 확정하되 한 가지 수정: Excel 실험이 실패해도 리서치가 제안한 "알려서
-    제약으로 수용"을 자동 적용하지 않고, **반드시 다시 상의**하기로 함(전 세션의 "알려진
-    제약으로 넘어가는 것 거부" 전례와 일치시킴).
-  - 사용자가 "`OnSetFocus`를 쓰면 `SetWinEventHook`은 없애도 되지 않냐"고 재확인 질문 →
-    Excel처럼 TIP이 `Activate()` 안 되는 프로세스에서는 `OnSetFocus` 자체가 없으므로
-    `SetWinEventHook`을 최후 방어선으로 유지하기로 재확인(이미 문서에 반영된 결정과 일치).
-- **`docs/adr/0006-tsf-focus-signal-and-office-activation-experiment.md`** 신설 — 위 결정
-  전체를 기록.
-- `CLAUDE.md` 갱신: 3절 "알려진 제약" 문단을 ADR-0006 참조로 재작성(Excel 실패 시 자동
-  수용 안 한다는 문구 명시), 4절에 `OnSetFocus` 구독·병합 우선순위 규칙·Excel 실험 관련
-  bullet 추가.
-- `CLAUDE_worklist.md` 3절의 미완료 항목("엔드투엔드 수동 시나리오 검증")을 구체적 하위
-  구현 항목 5개로 재작성(바로 아래 "다음에 시작할 지점" 참고).
-- 커밋 1개(`d893882`, "docs: 포커스 인식 아키텍처 결정 — TSF 포커스 신호 병행 + Excel
-  저위험 실험 (ADR-0006)") + `feature/ime-state-detection`,
-  `research/tsf-native-focus-signal`, `research/office-tip-activation-gap` 3개 브랜치 모두
-  origin에 push 완료. `prototype/tip-detection-poc-throwaway`는 이미 이전 세션에 push돼
-  있었음을 확인(추가 조치 불필요).
+- **재부팅 → 로그인 직후 타이밍 가설 검증**: 재부팅(11:57:31) 후 새로 뜬 패키지형 Notepad에서
+  재현 테스트 — 회귀 계속 재현. `ImeStateTip.cpp`에 파일 기반 진단 로그(`DiagLog`, 경로
+  `.scratch/ime_tip_debug.log`)를 `Activate`/`SubscribeThreadScopeCompartment`/
+  `ReportCurrentValue`/`OnChange`에 추가.
+- **모듈 로드 자체가 안 되는 것을 재확인**: `Get-Process -Id <pid> | Modules` 스캔 결과
+  Notepad/Notepad++ 어디에도 `ImeIndicatorTip.dll` 미로드. `CoCreateInstance`로 독립 호출하면
+  성공 — DLL/COM 등록 자체는 멀쩡하고 "TSF가 로드하기로 선택하지 않는" 지점 문제로 좁혀짐.
+- 스탠드얼론 진단 도구 `_diag_check_enabled.cpp`/`_build_diag.bat` 작성 —
+  `ITfInputProcessorProfileMgr::GetProfile`/`EnumProfiles`로 우리 프로필의
+  `ACTIVE`/`ENABLED` 플래그를 직접 조회.
+- 다음 가설을 순서대로 테스트해 **전부 배제**: "이전 버전 Microsoft IME" 토글 OFF(효과 없음),
+  `HKLM\...\CTF\TIP\{CLSID}` 레지스트리 패턴(정상), `DeactivateProfile`로 `ENABLED=0` 되돌리기
+  (여전히 미로드), AppLocker/CodeIntegrity/Defender/Smart App Control(차단 흔적 없음),
+  `ctfmon.exe` 강제 재시작(효과 없음).
+- 스크린샷 단서: 언어 전환 팝업에 `ingee.ImeIndicatorTip`이 Microsoft IME와 나란히 "선택
+  가능한 독립 키보드"로 노출 — Settings의 "설치됨" 계층과 TSF의 "enabled 프로필" 계층이
+  분리돼 있어 GUI로는 제거 불가.
+- `/resume`로 세션 재개 후, **타이밍 가설을 실측으로 기각**: 재부팅 2분 37초 후 새로 시작한
+  `mintty`와 7분 후 새로 시작한 Notepad++ 둘 다 DLL 미로드 확인(`Get-Process`로 모듈 직접
+  스캔). 재부팅 직후냐 아니냐가 원인이 아님이 확인됨.
+- **`ENABLED`≠`ACTIVE` 구분 발견**: `_diag_check_enabled.cpp`를 `DeactivateProfile` 대신
+  `ActivateProfile(TF_IPPMF_ENABLEPROFILE)`을 호출하도록 수정·재빌드해 실행 →
+  `ENABLED=1`은 재조회해도 유지되지만 `ACTIVE`는 그 COM 세션이 끝나면 다시 `0`으로 돌아옴.
+  `ENABLED=1` 상태로 완전히 새 Notepad++ 프로세스(`-multiInst`)를 띄워 재테스트했으나
+  **여전히 미로드** — `ENABLED=1`만으로는 부족하다는 뜻. `ACTIVE=1`(실제 선택된 키보드)이
+  필요조건일 수 있다는 새 가설이 생겼으나, 이를 만들려면 `TF_IPPMF_FORPROCESS`/`FORSESSION`이
+  필요해 CLAUDE.md 3절 비목표("표시 전용")와 충돌하고, 8/7~8/8엔 `ACTIVE=0`인 채로도 분명히
+  동작했던 사실과도 모순돼 **아직 완전히 설명되지 않은 채 남음**.
+- 다음 조사 방향(새 CLSID 재등록 vs Process Monitor 설치 vs 잠정 보류)을 사용자에게
+  물으려던 중, 사용자가 대신 **전체 정리**를 요청 — 아래 "완료한 정리 작업" 참고.
+- **TIP DLL 레지스트리 완전 정리**: `regsvr32 /u`로 `DllUnregisterServer` 호출 →
+  `HKLM\SOFTWARE\Classes\CLSID\{8CD02B2A-...}`, `HKLM\SOFTWARE\Microsoft\CTF\TIP\{8CD02B2A-...}`,
+  `HKCU` 쪽 모두 제거 확인. `Get-WinUserLanguageList`의 `ko` 키보드 목록에서
+  `ingee.ImeIndicatorTip`이 사라지고 Microsoft IME만 남음 확인. 시스템 전체 프로세스 스캔으로
+  DLL이 로드된 프로세스가 없음도 확인. `ctfmon.exe` 재시작으로 언어 전환 팝업 UI 캐시도 갱신.
+  **현재 TIP은 완전히 미등록 상태.**
+- `README.md` 개편(사용자 요청): "알려진 문제" 섹션(TIP+IPC 이전 아키텍처를 설명하던 낡은
+  내용) 제거, `CLAUDE.md`/`CLAUDE_worklist.md` 참조 없이 README만으로 완결되도록 재작성,
+  "개발/검증 환경" 섹션 신설(Windows 11 Pro·TSF 전용·"이전 버전 Microsoft IME" 옵션 켜짐 명시).
+- **워크플로우 컨벤션 확정**: `/resume`가 "마지막 세션 요약"을 소비한 뒤 그 섹션을 삭제하는
+  것이 사용자의 의도된 컨벤션임을 확인(이번 세션 중간에 이 섹션이 사라진 걸 발견하고 데이터
+  유실로 오인해 `git diff`/`reflog`/CRLF까지 조사했으나 실제로는 사용자가 의도적으로 삭제한
+  것이었음). 전역 스킬 `~/.claude/skills/resume/SKILL.md`(소비 후 삭제 단계 추가)와
+  `~/.claude/skills/wrap-up/SKILL.md`(섹션이 없는 게 정상 상태라는 안내 추가)에 이 컨벤션을
+  반영해 모든 프로젝트에 일관 적용되도록 함.
 
 ### 미완료 상태로 남은 작업과 현재 상태
 
-- 워크리스트 3절은 여전히 미완료 — 다만 이제 **막연한 "원인 규명 필요" 상태가 아니라
-  구체적인 구현 계획 5개 항목**으로 바뀌었다:
-  1. TIP: `OnSetFocus` 구독 + IPC 보고 (미착수)
-  2. UI: 포커스 신호 병합 우선순위 로직, TDD (미착수)
-  3. `cmd.exe` 반영 확인 (미착수 — 1·2 완료 후)
-  4. Excel: `TF_IPPMF_ENABLEPROFILE` 저위험 실험 (미착수)
-  5. 엔드투엔드 수동 시나리오 재검증 (미착수 — 1~4 완료 후)
-- 코드베이스 자체는 전 세션 상태 그대로다(이번 세션은 문서/결정만 다뤘음) — working tree
-  clean, `feature/ime-state-detection`은 origin과 동기화됨.
+- **핵심 회귀 여전히 미해결.** `ENABLED`만으로는 로드되지 않는다는 것까지는 확인했지만,
+  정확히 무엇이 있어야 로드되는지는 아직 모른다. 과거(8/7~8/8) 정상 동작 시점의
+  `ENABLED`/`ACTIVE` 값을 확인 못 한 채 지나간 게 뼈아프다 — 그때는 이 진단 도구 자체가
+  없었다.
+- **TIP은 현재 완전히 미등록 상태**(사용자 요청으로 정리 완료) — 다음 세션에서 조사를
+  재개하려면 재등록부터 해야 한다(`regsvr32`, 관리자 권한 필요, ADR-0005 Update 참고).
+- Excel/Word/PowerPoint 저위험 실험(ADR-0006)과 `cmd.exe`용 `OnSetFocus` 구독(워크리스트
+  3절 나머지 항목들)은 이 핵심 회귀가 먼저 해결되기 전까지 계속 보류.
+- 다음 조사 방향에 대한 사용자 결정이 아직 없음(새 CLSID 재등록 / Process Monitor 설치 /
+  다른 방안) — 다음 세션에서 다시 상의해야 한다.
 
 ### 다음에 시작할 지점
 
-1. **워크리스트 3절의 첫 번째 미완료 항목("TIP: TSF 포커스 신호 구독 + IPC 보고")부터
-   재개.** 시작 전에 `src/ImeIndicatorTip/ImeStateTip.cpp`를 먼저 읽어서 기존 컴파트먼트
-   구독 함수(리서치 문서가 "`SubscribeThreadScopeCompartment`"로 지칭한 것으로 보이는
-   함수)의 정확한 구조와 `Activate()`에서 받는 `threadMgr` 포인터의 정확한 변수명을 확인할
-   것 — 이번 세션에서 이 파일을 직접 열어보지 않아 정확한 줄 번호는 모른다.
-   `ITfThreadMgrEventSink`(`OnSetFocus`)를 같은 `threadMgr`에 `AdviseSink`로 추가 구독하고,
-   `Deactivate()`에서 짝을 맞춰 `UnadviseSink`할 것(기존 컴파트먼트 언싱크 패턴과 대칭).
-2. IPC 메시지 포맷 확장이 필요하다 — 현재 `IpcClient.h/.cpp`(TIP 쪽)와
-   `ImeStateIpcListener.cs`(UI 쪽, `MessageSize = 5`로 하드코딩된 `uint32 pid + uint8
-   isKoreanOpen`)는 상태 보고 전용 고정 포맷이다. 포커스 획득/상실 보고(PID + 타임스탬프 +
-   메시지 종류)를 함께 실어야 하므로, 메시지 종류를 구분하는 필드(예: 맨 앞 1바이트 태그)를
-   추가하는 하위 호환 없는 프로토콜 변경이 필요 — 양쪽을 동시에 고쳐야 한다.
-3. `OnSetFocus`가 `conhost.exe`에서 실제로 발화하는지가 이번 결정 전체의 핵심 전제다
-   (리서치가 미검증으로 남김) — 구현 후 가장 먼저 `cmd.exe`를 띄워 실측 확인할 것. 여기서
-   발화 안 하면 ADR-0006을 재검토해야 한다.
-4. UI 쪽 병합 우선순위 로직은 `ForegroundStateResolver.cs`를 확장하거나 별도 함수로 TDD
-   먼저 작성 — 표는 CLAUDE_worklist.md 3절의 해당 항목에 이미 정리돼 있다(테이블에
-   있음/없음 × 포커스 신호 있음/없음/더 최신임의 조합).
+1. **다음 조사 방향부터 사용자와 다시 상의할 것** — 이번 세션에서 결정 못 하고 넘어감. 후보:
+   (a) 완전히 새 CLSID/프로필 GUID로 재등록해서 기존 CLSID에 묶인 캐시/상태 문제인지 구분
+   (추천 — 기존 CLSID는 지난 세션들의 여러 실험으로 상태가 오염됐을 가능성이 있음),
+   (b) Sysinternals Process Monitor 설치해서 Notepad/Notepad++ 시작 시 TSF 관련 레지스트리
+   조회 과정을 직접 추적(현재 미설치), (c) `ACTIVE=1`이 정말 필요조건인지 확인하되
+   `TF_IPPMF_FORPROCESS`/`FORSESSION`은 CLAUDE.md 비목표와 충돌하므로 신중히 재검토.
+2. 재등록부터 해야 재조사가 가능하다 — `regsvr32 "C:\_data\git\ime-indicator\src\ImeIndicatorTip\x64\Debug\ImeIndicatorTip.dll"`(관리자 PowerShell). CLSID는
+   `{8CD02B2A-A5A2-4902-A9F7-8ECFCCCF89E2}`, 언어 프로필 GUID는
+   `{986562BD-97A1-4877-A1FD-082713973899}`(`Registration.cpp`/`Guids.h` 참고).
+3. `src/ImeIndicatorTip/_diag_check_enabled.cpp`는 현재 마지막 동작이 `DeactivateProfile`이
+   아니라 `ActivateProfile(TF_IPPMF_ENABLEPROFILE)`로 바뀐 상태다 — 재실행할 때마다 자동으로
+   `ENABLED=1`이 켜진다는 점 유의(전에는 반대로 매번 꺼졌었음). 재사용 시 이 사실을 먼저
+   상기할 것.
+4. `ImeStateTip.cpp`의 `DiagLog` 진단 코드는 아직 유지 중(미커밋) — 조사 계속할 거면 그대로
+   두고, 로그 경로는 `.scratch/ime_tip_debug.log`.
 
 ### 특이사항 / 참고
 
-- **핵심 결정 하나만 남긴다면**: `SetWinEventHook`은 없애지 않는다. `OnSetFocus`는 TIP이
-  `Activate()`된 프로세스에서만 존재할 수 있는 신호라, Excel처럼 애초에 TIP이 로드조차
-  안 되는 프로세스(현재도, 앞으로 발견될 수도 있는)의 최후 방어선으로 `SetWinEventHook`이
-  계속 필요하다.
-- **사용자 피드백(재확인)**: "실패하면 알려진 제약으로 조용히 수용"하는 패턴은 이 프로젝트에서
-  거부된다 — Excel 실험이 실패해도 자동으로 문서화하고 넘어가지 말고 반드시 다시 상의할 것
-  (ADR-0006, CLAUDE.md 3절에 명시).
-- **subagent 사용 시 주의**: `isolation: "worktree"`로 띄운 research subagent가 브랜치를
-  만들 때, 다른 브랜치(`feature/ime-state-detection`)의 파일 트리를 베이스로 체크아웃하는
-  걸 거부하고 대신 훨씬 오래된 orphan 커밋을 베이스로 삼는 경우가 있었다(2번 다 그랬음,
-  우연이 아니라 격리 정책으로 보임). 결과물(파일 diff)은 정상이었지만 브랜치의 부모 커밋이
-  잘못됐으므로, 매번 `git show <subagent 커밋>:<path>`로 파일만 뽑아 임시 worktree에서
-  `feature/ime-state-detection` 위에 다시 커밋하는 보정이 필요했다. 다음에도 같은 패턴이
-  재현될 가능성이 높으니 미리 감안할 것.
-- **메모리 갱신**: 권한 프롬프트에 목적을 명시하는 규칙을 Bash/PowerShell 한정에서
-  "권한을 요구하는 모든 도구 호출"로 범위를 넓혀 저장함(`feedback_bash-description-purpose.md`).
-  WebSearch 도구는 `description` 파라미터 자체가 없어 이 규칙을 못 지킨다는 것도 확인 —
-  그런 도구는 호출 전 텍스트로 목적을 먼저 밝히는 방식으로 보완하기로 함.
-- Wayfinder 맵(`.scratch/ime-focus-accuracy/map.md`)은 destination에 도달해 완료됐지만,
-  "Not yet specified"에 `TF_IPPMF_ENABLEPROFILE` 실패 시 무엇을 상의할지는 아직 fog로
-  남아있다(실험 결과가 나와야 구체화 가능) — 다음에 이 맵을 다시 열어볼 상황이 생기면
-  참고할 것.
+- **"이전 버전의 Microsoft IME" 토글은 절대 끄라고 제안하지 말 것.** 사용자가 Vim 사용자라
+  `C:\_data\git\AutoHotkey\for VIM ESC.ahk`(ESC로 한→영 강제 전환)를 상시 사용 중이고, 이
+  토글이 꺼지면 그 스크립트가 부자연스럽게 동작한다. 이번 세션에서도 다시 한번 이 토글을
+  끄면 워크플로우만 깨지고 버그 재현에는 영향이 없다는 게 재확인됐다.
+- **미커밋 변경사항 현황**: `CLAUDE_worklist.md`(이 요약), `README.md`(개발/검증 환경 섹션),
+  `src/ImeIndicatorTip/ImeStateTip.cpp`(diag 로그), `src/ImeIndicatorTip/_diag_check_enabled.cpp`
+  (Activate로 수정), 신규 미추적 `_build_diag.bat`/`_diag_check_enabled.exe`. 전부 다음
+  세션에서도 유용하게 재사용 가능 — 지우지 말 것.
+- `Enable`/`ENABLED`·`ACTIVE` 플래그는 `HKLM\...\CTF\TIP\{CLSID}\LanguageProfile\...`의 정적
+  레지스트리 값과 다른 런타임 계층이다 — 이번 세션에 `ITfInputProcessorProfileMgr` API로 직접
+  조회하는 방법을 확립했으니 앞으로 이 값들을 볼 땐 레지스트리 대신 이 API를 우선 사용할 것.
+- `x64/Debug/`에 지난 세션들의 DLL 파일 잠금 우회 잔여물(`.locked`, `.locked2` 등)이 계속
+  쌓이고 있다 — 당장 급한 건 아니지만 언젠가 한 번 정리 필요.

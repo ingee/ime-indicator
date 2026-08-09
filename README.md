@@ -1,7 +1,7 @@
 # ime-indicator
 
-Windows용 한/영 입력 상태(IME) 인디케이터. 자세한 스펙은 [`CLAUDE.md`](CLAUDE.md), 구현
-진행 상황은 [`CLAUDE_worklist.md`](CLAUDE_worklist.md) 참고.
+Windows용 한/영 입력 상태(IME) 인디케이터. 화면 구석에 작은 창을 항상 띄워 현재 입력 상태
+(한글/영문)를 표시한다.
 
 ## 빌드
 
@@ -43,12 +43,10 @@ dotnet publish src/ImeIndicator/ImeIndicator.csproj -r win-x64 --self-contained 
 - 프로세스를 종료하려면 현재는 작업 관리자에서 `ImeIndicator.exe`를 강제 종료해야 한다
   (트레이 아이콘/종료 메뉴는 아직 구현 전).
 
-### 알려진 문제
+## 개발/검증 환경
 
-- **실제 시스템의 한/영 상태를 반영하지 못한다.** 현재 구현(TSF `ITfThreadMgrEventSink`
-  구독)은 다른 프로세스의 포커스/컴파트먼트 변경 이벤트를 받지 못하는 것으로 확인됐다 —
-  TSF의 스레드 매니저·컴파트먼트 객체가 그 인스턴스를 만든 프로세스 안에서만 유효하기
-  때문으로 보인다. 즉 현재는 항상 시작 시 기본값(영문)으로만 뜨고, 클릭으로 수동 반전한
-  경우를 빼면 실제 입력 상태와 무관하게 고정되어 있다.
-- 원인과 검토한 대안은 대화 기록/커밋 히스토리 참고. 정식 해결(TSF Text Input Processor
-  등록 등)은 다음 작업으로 남아 있다.
+- Windows 11 Pro. 입력기는 TSF(Text Services Framework)로만 동작하며, 레거시 IMM API
+  (`ImmGetContext`)는 `himc=0`을 반환해 사실상 쓸 수 없다.
+- 한국어 키보드의 **"이전 버전의 Microsoft IME 사용" 옵션: 켜짐**(설정 > 시간 및 언어 > 언어
+  및 지역 > 한국어 > 키보드 옵션). 이 옵션 상태에 따라 IME 이벤트 동작이 달라질 수 있으므로,
+  다른 환경에서 개발/검증할 때는 이 값도 함께 맞추는 것을 권장한다.
