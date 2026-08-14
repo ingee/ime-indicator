@@ -80,6 +80,11 @@ Label: wayfinder:map
 - 회귀 원인이 끝내 안 밝혀지면 대안 아키텍처([issue 04](issues/04-taskbar-indicator-observation.md))로
   완전히 갈아탈지, 절충([issue 03](issues/03-selection-required-nongoal-conflict.md))으로 갈지는
   각 리서치 결과가 나온 뒤 사용자와 다시 상의한다.
+- **새 후보, 2026-08-15 등록**: [issue 07](issues/07-focus-triggered-incontext-injection.md) —
+  포커스 전환마다 `EVENT_SYSTEM_FOREGROUND` + `WINEVENT_INCONTEXT`로 그 프로세스에 직접
+  주입해서, TIP 자동 로드(현재 고장난 지점)를 우회하고 Compartment 구독을 바로 거는 아이디어.
+  issue 04에서 실측한 `WINEVENT_INCONTEXT` 주입 성공(`LangBarPoc8`)을 다른 이벤트에 응용하는
+  것이라 완전히 새 리서치는 아니고, 다음 세션에 이어서 진행하기로 함(오늘은 등록만).
 
 ## Out of scope
 
