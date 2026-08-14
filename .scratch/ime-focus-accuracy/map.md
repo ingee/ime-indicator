@@ -19,7 +19,7 @@ Label: wayfinder:map
   패턴(프로세스마다 클라이언트 로드 + 중앙 relay)을 쓴다는 게 조사로 확인됐다(Google Project Zero,
   Tavis Ormandy, 2019). 재검토 대상이 아니다.
 - 무포커스/논텍스트 상태는 "마지막 상태 유지"로 확정 — 제3 UI 상태 추가 안 함(구현 용이성 우선,
-  CLAUDE.md 5절 변경 없음).
+  docs/ui-spec.md 변경 없음).
 - 관련 스킬: 리서치 티켓은 `/research`, 필요시 `/domain-modeling`.
 - 결정이 나오면 CLAUDE.md 4절 갱신 + `CLAUDE_worklist.md` 3절 구현으로 이어진다.
 

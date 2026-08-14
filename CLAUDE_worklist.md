@@ -1,4 +1,9 @@
-# CLAUDE_worklist.md — 구현 작업 계획
+# CLAUDE_worklist.md — 구현 작업 계획 (보관용)
+
+> **보관용 문서 — 더 이상 갱신하지 않는다.** 2026-08-14 세션에서 TIP `Activate()` 미호출
+> 회귀와 아키텍처 재검토가 시작되면서, 현재 진행 상황과 다음 시도는
+> `.scratch/ime-detection-strategy/map.md` wayfinder 맵을 따른다. 이 파일은 그 이전까지
+> 실제로 구현·검증했던 내용의 기록으로만 남겨둔다.
 
 `CLAUDE.md` 스펙을 기반으로 한 구현 작업 목록. 각 항목은 커밋 하나 분량으로 쪼갰고,
 위에서부터 순서대로(우선순위대로) 진행한다. 완료하면 체크박스를 `[x]`로 표시한다.
@@ -20,10 +25,10 @@
 
 - [x] **프로젝트 스캐폴딩**
   - 검증방법: `dotnet build`가 성공하는지로 확인. TDD 대상 아님 — 프로젝트 생성/설정 파일이라
-    "테스트할 동작" 자체가 없음. (CLAUDE.md 4, 7절)
+    "테스트할 동작" 자체가 없음. (CLAUDE.md 4절, docs/ui-spec.md)
 - [x] **설정값(Constants) 모듈**
-  - 검증방법: 코드 리뷰(값이 CLAUDE.md 5절과 일치하는지 눈으로 대조)로 충분. TDD 대상
-    아님 — 상수 나열이라 동작이 없음. (CLAUDE.md 5절)
+  - 검증방법: 코드 리뷰(값이 docs/ui-spec.md와 일치하는지 눈으로 대조)로 충분. TDD 대상
+    아님 — 상수 나열이라 동작이 없음. (docs/ui-spec.md)
 
 ## 2. 인디케이터 UI (TSF 연동 이전 — 하드코딩 상태로 렌더링 검증)
 
@@ -31,16 +36,16 @@
   - 검증방법: "상태(한글/영문) → 배경색/텍스트" 매핑 함수는 TDD로 진행 — 테스트를 먼저
     작성해 빨강/"한", 파랑/"A" 매핑을 검증한다. 반면 `CreateParams` 오버라이드로 만드는
     topmost·no-activate·tool window 속성은 실제 창을 띄워 눈으로 확인해야 하는 글루 코드라
-    TDD 대상이 아니며, 앱을 실행해 수동으로 확인한다. (CLAUDE.md 5절)
+    TDD 대상이 아니며, 앱을 실행해 수동으로 확인한다. (docs/ui-spec.md)
 - [x] **멀티 모니터 배치**
   - 검증방법: "모니터 경계 + 인디케이터 크기 + 상단 여백 → 창 위치(x, y)" 계산 함수는 TDD로
     진행 — 임의의 모니터 좌표를 입력으로 줘서 기대 좌표가 나오는지 테스트한다. `Screen.AllScreens`
     열거와 실제 폼 생성/배치는 글루 코드이므로 실제 모니터 환경에서 눈으로 확인한다.
-    (CLAUDE.md 5절)
+    (docs/ui-spec.md)
 - [x] **클릭 반전 + 전체 동기화**
   - 검증방법: "현재 표시 상태 → 반전된 상태" 전이와 "모든 모니터에 같은 값 전파"는 UI 이벤트와
     분리된 상태 관리 클래스/함수로 뽑아 TDD로 진행 가능 — 클릭 이벤트 자체는 그 로직을
-    호출하는 얇은 연결부라 실행해서 수동으로 클릭해보는 정도로 확인한다. (CLAUDE.md 6절)
+    호출하는 얇은 연결부라 실행해서 수동으로 클릭해보는 정도로 확인한다. (docs/ui-spec.md)
 
 ## 3. TIP + IPC 연동 (ADR-0005)
 
@@ -50,7 +55,7 @@
   - 검증방법: `regsvr32`로 등록 후 메모장을 완전히 종료했다가 새로 띄워 `Activate()`가
     호출되는지(임시 로그로) 확인 완료. **HKCU\Software\Classes만으로는 COM 등록은 성공해도
     TSF가 실제로 로드하지 않고, HKLM에 등록해야 로드된다는 것을 실측으로 확인** — 관리자
-    권한이 필요하다는 뜻(ADR-0005 Update, CLAUDE.md 7절 반영 완료). `regsvr32 /u`로 등록
+    권한이 필요하다는 뜻(ADR-0005 Update, docs/ui-spec.md 반영 완료). `regsvr32 /u`로 등록
     해제 시 레지스트리가 깨끗이 정리되는지도 확인 완료. TDD 대상 아님 — COM 등록/로딩
     자체가 글루.
 - [x] **스레드 스코프 컴파트먼트 구독 (TipPoc7 로직 이식)**
@@ -132,12 +137,12 @@
 - [ ] **트레이 아이콘 및 컨텍스트 메뉴**
   - 검증방법: 트레이에 아이콘이 뜨는지, 참고 이미지(`docs/assets/tray-icon-reference.png`)
     스타일과 맞는지, 우클릭 메뉴의 "종료"가 동작하는지 실행해서 눈으로 확인. TDD 대상
-    아님 — 에셋 제작과 `NotifyIcon` 연결이라 동작이라 부를 게 없음. (CLAUDE.md 7절)
+    아님 — 에셋 제작과 `NotifyIcon` 연결이라 동작이라 부를 게 없음. (docs/ui-spec.md)
 - [ ] **시작프로그램 등록/해제**
   - 검증방법: "현재 등록 여부(bool) → 메뉴 라벨/체크 상태" 판단 로직은 TDD로 먼저 작성.
     실제 레지스트리 읽기/쓰기는 인터페이스로 감싸 가짜 구현으로 등록/해제 흐름까지 TDD로
     검증할 수 있다. 다만 실제 레지스트리 키가 제대로 생기고 로그인 시 실행되는지는 마지막에
-    한 번 수동으로 확인한다. (CLAUDE.md 7절)
+    한 번 수동으로 확인한다. (docs/ui-spec.md)
 
 ## 5. 마무리
 
@@ -148,104 +153,4 @@
 - [ ] **Self-contained 단일 파일 게시 검증**
   - 검증방법: `dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true` 실행 후
     결과 exe를 별도 .NET 런타임 없는 환경(또는 그렇다고 가정하고)에서 실행해 정상 동작하는지
-    확인. TDD 대상 아님 — 빌드/배포 절차 검증. (CLAUDE.md 7절)
-
-## 마지막 세션 요약 (2026-08-09)
-
-### 오늘 완료한 작업
-
-`Activate()`가 Notepad/Notepad++ 어디에서도 호출되지 않는 핵심 회귀를 계속 조사한 하루.
-결론(완전 해결)까지는 못 갔지만, 유력한 가설 하나를 기각하고 새 가설 하나를 좁혔다.
-
-- **재부팅 → 로그인 직후 타이밍 가설 검증**: 재부팅(11:57:31) 후 새로 뜬 패키지형 Notepad에서
-  재현 테스트 — 회귀 계속 재현. `ImeStateTip.cpp`에 파일 기반 진단 로그(`DiagLog`, 경로
-  `.scratch/ime_tip_debug.log`)를 `Activate`/`SubscribeThreadScopeCompartment`/
-  `ReportCurrentValue`/`OnChange`에 추가.
-- **모듈 로드 자체가 안 되는 것을 재확인**: `Get-Process -Id <pid> | Modules` 스캔 결과
-  Notepad/Notepad++ 어디에도 `ImeIndicatorTip.dll` 미로드. `CoCreateInstance`로 독립 호출하면
-  성공 — DLL/COM 등록 자체는 멀쩡하고 "TSF가 로드하기로 선택하지 않는" 지점 문제로 좁혀짐.
-- 스탠드얼론 진단 도구 `_diag_check_enabled.cpp`/`_build_diag.bat` 작성 —
-  `ITfInputProcessorProfileMgr::GetProfile`/`EnumProfiles`로 우리 프로필의
-  `ACTIVE`/`ENABLED` 플래그를 직접 조회.
-- 다음 가설을 순서대로 테스트해 **전부 배제**: "이전 버전 Microsoft IME" 토글 OFF(효과 없음),
-  `HKLM\...\CTF\TIP\{CLSID}` 레지스트리 패턴(정상), `DeactivateProfile`로 `ENABLED=0` 되돌리기
-  (여전히 미로드), AppLocker/CodeIntegrity/Defender/Smart App Control(차단 흔적 없음),
-  `ctfmon.exe` 강제 재시작(효과 없음).
-- 스크린샷 단서: 언어 전환 팝업에 `ingee.ImeIndicatorTip`이 Microsoft IME와 나란히 "선택
-  가능한 독립 키보드"로 노출 — Settings의 "설치됨" 계층과 TSF의 "enabled 프로필" 계층이
-  분리돼 있어 GUI로는 제거 불가.
-- `/resume`로 세션 재개 후, **타이밍 가설을 실측으로 기각**: 재부팅 2분 37초 후 새로 시작한
-  `mintty`와 7분 후 새로 시작한 Notepad++ 둘 다 DLL 미로드 확인(`Get-Process`로 모듈 직접
-  스캔). 재부팅 직후냐 아니냐가 원인이 아님이 확인됨.
-- **`ENABLED`≠`ACTIVE` 구분 발견**: `_diag_check_enabled.cpp`를 `DeactivateProfile` 대신
-  `ActivateProfile(TF_IPPMF_ENABLEPROFILE)`을 호출하도록 수정·재빌드해 실행 →
-  `ENABLED=1`은 재조회해도 유지되지만 `ACTIVE`는 그 COM 세션이 끝나면 다시 `0`으로 돌아옴.
-  `ENABLED=1` 상태로 완전히 새 Notepad++ 프로세스(`-multiInst`)를 띄워 재테스트했으나
-  **여전히 미로드** — `ENABLED=1`만으로는 부족하다는 뜻. `ACTIVE=1`(실제 선택된 키보드)이
-  필요조건일 수 있다는 새 가설이 생겼으나, 이를 만들려면 `TF_IPPMF_FORPROCESS`/`FORSESSION`이
-  필요해 CLAUDE.md 3절 비목표("표시 전용")와 충돌하고, 8/7~8/8엔 `ACTIVE=0`인 채로도 분명히
-  동작했던 사실과도 모순돼 **아직 완전히 설명되지 않은 채 남음**.
-- 다음 조사 방향(새 CLSID 재등록 vs Process Monitor 설치 vs 잠정 보류)을 사용자에게
-  물으려던 중, 사용자가 대신 **전체 정리**를 요청 — 아래 "완료한 정리 작업" 참고.
-- **TIP DLL 레지스트리 완전 정리**: `regsvr32 /u`로 `DllUnregisterServer` 호출 →
-  `HKLM\SOFTWARE\Classes\CLSID\{8CD02B2A-...}`, `HKLM\SOFTWARE\Microsoft\CTF\TIP\{8CD02B2A-...}`,
-  `HKCU` 쪽 모두 제거 확인. `Get-WinUserLanguageList`의 `ko` 키보드 목록에서
-  `ingee.ImeIndicatorTip`이 사라지고 Microsoft IME만 남음 확인. 시스템 전체 프로세스 스캔으로
-  DLL이 로드된 프로세스가 없음도 확인. `ctfmon.exe` 재시작으로 언어 전환 팝업 UI 캐시도 갱신.
-  **현재 TIP은 완전히 미등록 상태.**
-- `README.md` 개편(사용자 요청): "알려진 문제" 섹션(TIP+IPC 이전 아키텍처를 설명하던 낡은
-  내용) 제거, `CLAUDE.md`/`CLAUDE_worklist.md` 참조 없이 README만으로 완결되도록 재작성,
-  "개발/검증 환경" 섹션 신설(Windows 11 Pro·TSF 전용·"이전 버전 Microsoft IME" 옵션 켜짐 명시).
-- **워크플로우 컨벤션 확정**: `/resume`가 "마지막 세션 요약"을 소비한 뒤 그 섹션을 삭제하는
-  것이 사용자의 의도된 컨벤션임을 확인(이번 세션 중간에 이 섹션이 사라진 걸 발견하고 데이터
-  유실로 오인해 `git diff`/`reflog`/CRLF까지 조사했으나 실제로는 사용자가 의도적으로 삭제한
-  것이었음). 전역 스킬 `~/.claude/skills/resume/SKILL.md`(소비 후 삭제 단계 추가)와
-  `~/.claude/skills/wrap-up/SKILL.md`(섹션이 없는 게 정상 상태라는 안내 추가)에 이 컨벤션을
-  반영해 모든 프로젝트에 일관 적용되도록 함.
-
-### 미완료 상태로 남은 작업과 현재 상태
-
-- **핵심 회귀 여전히 미해결.** `ENABLED`만으로는 로드되지 않는다는 것까지는 확인했지만,
-  정확히 무엇이 있어야 로드되는지는 아직 모른다. 과거(8/7~8/8) 정상 동작 시점의
-  `ENABLED`/`ACTIVE` 값을 확인 못 한 채 지나간 게 뼈아프다 — 그때는 이 진단 도구 자체가
-  없었다.
-- **TIP은 현재 완전히 미등록 상태**(사용자 요청으로 정리 완료) — 다음 세션에서 조사를
-  재개하려면 재등록부터 해야 한다(`regsvr32`, 관리자 권한 필요, ADR-0005 Update 참고).
-- Excel/Word/PowerPoint 저위험 실험(ADR-0006)과 `cmd.exe`용 `OnSetFocus` 구독(워크리스트
-  3절 나머지 항목들)은 이 핵심 회귀가 먼저 해결되기 전까지 계속 보류.
-- 다음 조사 방향에 대한 사용자 결정이 아직 없음(새 CLSID 재등록 / Process Monitor 설치 /
-  다른 방안) — 다음 세션에서 다시 상의해야 한다.
-
-### 다음에 시작할 지점
-
-1. **다음 조사 방향부터 사용자와 다시 상의할 것** — 이번 세션에서 결정 못 하고 넘어감. 후보:
-   (a) 완전히 새 CLSID/프로필 GUID로 재등록해서 기존 CLSID에 묶인 캐시/상태 문제인지 구분
-   (추천 — 기존 CLSID는 지난 세션들의 여러 실험으로 상태가 오염됐을 가능성이 있음),
-   (b) Sysinternals Process Monitor 설치해서 Notepad/Notepad++ 시작 시 TSF 관련 레지스트리
-   조회 과정을 직접 추적(현재 미설치), (c) `ACTIVE=1`이 정말 필요조건인지 확인하되
-   `TF_IPPMF_FORPROCESS`/`FORSESSION`은 CLAUDE.md 비목표와 충돌하므로 신중히 재검토.
-2. 재등록부터 해야 재조사가 가능하다 — `regsvr32 "C:\_data\git\ime-indicator\src\ImeIndicatorTip\x64\Debug\ImeIndicatorTip.dll"`(관리자 PowerShell). CLSID는
-   `{8CD02B2A-A5A2-4902-A9F7-8ECFCCCF89E2}`, 언어 프로필 GUID는
-   `{986562BD-97A1-4877-A1FD-082713973899}`(`Registration.cpp`/`Guids.h` 참고).
-3. `src/ImeIndicatorTip/_diag_check_enabled.cpp`는 현재 마지막 동작이 `DeactivateProfile`이
-   아니라 `ActivateProfile(TF_IPPMF_ENABLEPROFILE)`로 바뀐 상태다 — 재실행할 때마다 자동으로
-   `ENABLED=1`이 켜진다는 점 유의(전에는 반대로 매번 꺼졌었음). 재사용 시 이 사실을 먼저
-   상기할 것.
-4. `ImeStateTip.cpp`의 `DiagLog` 진단 코드는 아직 유지 중(미커밋) — 조사 계속할 거면 그대로
-   두고, 로그 경로는 `.scratch/ime_tip_debug.log`.
-
-### 특이사항 / 참고
-
-- **"이전 버전의 Microsoft IME" 토글은 절대 끄라고 제안하지 말 것.** 사용자가 Vim 사용자라
-  `C:\_data\git\AutoHotkey\for VIM ESC.ahk`(ESC로 한→영 강제 전환)를 상시 사용 중이고, 이
-  토글이 꺼지면 그 스크립트가 부자연스럽게 동작한다. 이번 세션에서도 다시 한번 이 토글을
-  끄면 워크플로우만 깨지고 버그 재현에는 영향이 없다는 게 재확인됐다.
-- **미커밋 변경사항 현황**: `CLAUDE_worklist.md`(이 요약), `README.md`(개발/검증 환경 섹션),
-  `src/ImeIndicatorTip/ImeStateTip.cpp`(diag 로그), `src/ImeIndicatorTip/_diag_check_enabled.cpp`
-  (Activate로 수정), 신규 미추적 `_build_diag.bat`/`_diag_check_enabled.exe`. 전부 다음
-  세션에서도 유용하게 재사용 가능 — 지우지 말 것.
-- `Enable`/`ENABLED`·`ACTIVE` 플래그는 `HKLM\...\CTF\TIP\{CLSID}\LanguageProfile\...`의 정적
-  레지스트리 값과 다른 런타임 계층이다 — 이번 세션에 `ITfInputProcessorProfileMgr` API로 직접
-  조회하는 방법을 확립했으니 앞으로 이 값들을 볼 땐 레지스트리 대신 이 API를 우선 사용할 것.
-- `x64/Debug/`에 지난 세션들의 DLL 파일 잠금 우회 잔여물(`.locked`, `.locked2` 등)이 계속
-  쌓이고 있다 — 당장 급한 건 아니지만 언젠가 한 번 정리 필요.
+    확인. TDD 대상 아님 — 빌드/배포 절차 검증. (docs/ui-spec.md)

@@ -5,13 +5,37 @@
 #include <msctf.h>
 #include <cstdio>
 
-// {8CD02B2A-A5A2-4902-A9F7-8ECFCCCF89E2}
-static const GUID CLSID_ImeIndicatorTip = { 0x8cd02b2a, 0xa5a2, 0x4902, { 0xa9, 0xf7, 0x8e, 0xcf, 0xcc, 0xcf, 0x89, 0xe2 } };
-// {986562BD-97A1-4877-A1FD-082713973899}
-static const GUID GUID_ImeIndicatorLanguageProfile = { 0x986562bd, 0x97a1, 0x4877, { 0xa1, 0xfd, 0x08, 0x27, 0x13, 0x97, 0x38, 0x99 } };
+// {381AC302-138C-4A2F-8130-01800D681697}
+static const GUID CLSID_ImeIndicatorTip = { 0x381ac302, 0x138c, 0x4a2f, { 0x81, 0x30, 0x01, 0x80, 0x0d, 0x68, 0x16, 0x97 } };
+// {15D66B19-64DA-425C-9DF4-8D38467DC292}
+static const GUID GUID_ImeIndicatorLanguageProfile = { 0x15d66b19, 0x64da, 0x425c, { 0x9d, 0xf4, 0x8d, 0x38, 0x46, 0x7d, 0xc2, 0x92 } };
 
 int main()
 {
+    {
+        auto printCat = [](const wchar_t* name, const GUID& g) {
+            wchar_t s[64];
+            StringFromGUID2(g, s, 64);
+            wprintf(L"%-40s = %s\n", name, s);
+        };
+        printCat(L"GUID_TFCAT_CATEGORY_OF_TIP", GUID_TFCAT_CATEGORY_OF_TIP);
+        printCat(L"GUID_TFCAT_TIP_KEYBOARD", GUID_TFCAT_TIP_KEYBOARD);
+        printCat(L"GUID_TFCAT_TIP_SPEECH", GUID_TFCAT_TIP_SPEECH);
+        printCat(L"GUID_TFCAT_TIP_HANDWRITING", GUID_TFCAT_TIP_HANDWRITING);
+        printCat(L"GUID_TFCAT_TIPCAP_SECUREMODE", GUID_TFCAT_TIPCAP_SECUREMODE);
+        printCat(L"GUID_TFCAT_TIPCAP_UIELEMENTENABLED", GUID_TFCAT_TIPCAP_UIELEMENTENABLED);
+        printCat(L"GUID_TFCAT_TIPCAP_INPUTMODECOMPARTMENT", GUID_TFCAT_TIPCAP_INPUTMODECOMPARTMENT);
+        printCat(L"GUID_TFCAT_TIPCAP_COMLESS", GUID_TFCAT_TIPCAP_COMLESS);
+        printCat(L"GUID_TFCAT_TIPCAP_WOW16", GUID_TFCAT_TIPCAP_WOW16);
+        printCat(L"GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT", GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT);
+        printCat(L"GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT", GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT);
+        printCat(L"GUID_TFCAT_PROP_AUDIODATA", GUID_TFCAT_PROP_AUDIODATA);
+        printCat(L"GUID_TFCAT_PROP_INKDATA", GUID_TFCAT_PROP_INKDATA);
+        printCat(L"GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER", GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER);
+        printCat(L"GUID_TFCAT_DISPLAYATTRIBUTEPROPERTY", GUID_TFCAT_DISPLAYATTRIBUTEPROPERTY);
+        wprintf(L"\n--- target: {A028AE76-01B1-46C2-99C4-ACD9858AE02F} ---\n");
+    }
+
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(hr))
     {
@@ -66,10 +90,13 @@ int main()
         printf("EnumProfiles failed: 0x%08lX\n", hr);
     }
 
-    printf("\n--- ActivateProfile(TF_IPPMF_ENABLEPROFILE)로 enable 플래그 켜는 중 ---\n");
-    hr = profileMgr->ActivateProfile(TF_PROFILETYPE_INPUTPROCESSOR, 0x0412, CLSID_ImeIndicatorTip,
-        GUID_ImeIndicatorLanguageProfile, nullptr, TF_IPPMF_ENABLEPROFILE);
-    printf("ActivateProfile: hr=0x%08lX\n", hr);
+    // 2026-08-14: 새 CLSID가 AddLanguageProfile만으로 이미 ENABLED=1로 뜨는 것을 확인한 뒤,
+    // 오염되지 않은 이 CLSID에서 DeactivateProfile로 ENABLED=0 되돌리면 "한" 표시/Activate()가
+    // 회복되는지 깨끗하게 재검증하기 위한 호출.
+    printf("\n--- DeactivateProfile로 ENABLED=0 되돌리는 중 ---\n");
+    hr = profileMgr->DeactivateProfile(TF_PROFILETYPE_INPUTPROCESSOR, 0x0412, CLSID_ImeIndicatorTip,
+        GUID_ImeIndicatorLanguageProfile, nullptr, TF_IPPMF_DISABLEPROFILE);
+    printf("DeactivateProfile: hr=0x%08lX\n", hr);
 
     ZeroMemory(&ourProfile, sizeof(ourProfile));
     hr = profileMgr->GetProfile(TF_PROFILETYPE_INPUTPROCESSOR, 0x0412, CLSID_ImeIndicatorTip,

@@ -7,7 +7,7 @@
 // 실측 결과: CLSID를 HKEY_CURRENT_USER\Software\Classes에만 등록하면 COM 자체(CoCreateInstance)는
 // 정상 동작하지만, TSF는 이 TIP을 새로 뜨는 프로세스에 로드하지 않는다(확인 방법: 등록 후
 // 메모장을 전부 종료했다가 완전히 새로 띄워도 Activate()가 호출되지 않음). HKEY_LOCAL_MACHINE에
-// 등록해야 실제로 로드된다 — 즉 이 TIP의 설치 단계는 관리자 권한이 필요하다. CLAUDE.md 7절/
+// 등록해야 실제로 로드된다 — 즉 이 TIP의 설치 단계는 관리자 권한이 필요하다. docs/ui-spec.md/
 // ADR-0005가 미검증으로 남겨뒀던 질문의 답이 이걸로 확정됐다.
 static const wchar_t* kDisplayName = L"ingee.ImeIndicatorTip";
 static const LANGID kKoreanLangId = 0x0412;

@@ -44,7 +44,7 @@ ADR-0004는 `GUID_COMPARTMENT_KEYBOARD_OPENCLOSE`를 문서/전역(`GetGlobalCom
 - TIP DLL(여러 프로세스에 로드)과 단일 UI EXE 사이의 IPC 방식(named pipe/공유 메모리 등)은
   아직 미결정이며 다음 설계 과제로 남는다.
 - ADR-0003이 남긴 배포 방식 변경(관리자 권한 1회 설치 필요)도 여전히 유효하며, ADR-0001과
-  CLAUDE.md 7절을 이 시점에 맞춰 갱신해야 한다.
+  docs/ui-spec.md를 이 시점에 맞춰 갱신해야 한다.
 - 프로토타입 코드(`TipPoc6`, `TipPoc7`)는 `prototype/tip-detection-poc-throwaway` 브랜치에
   보존한다.
 
@@ -60,7 +60,7 @@ TIP 프로필(`HKLM\SOFTWARE\Microsoft\CTF\TIP\...`)도 CLSID 위치와 무관�
 프로세스에 로드하지 않는다.
 
 **결론: TIP DLL 설치(`DllRegisterServer`)는 관리자 권한이 필요하다.** ADR-0003의 배포 방식
-변경 예상이 그대로 확정됐다 — CLAUDE.md 7절, ADR-0001을 이 사실에 맞춰 갱신한다(별도
+변경 예상이 그대로 확정됐다 — docs/ui-spec.md, ADR-0001을 이 사실에 맞춰 갱신한다(별도
 후속 결정으로 미뤄뒀던 부분).
 
 ## Update — 엔드투엔드 테스트로 확인된 두 가지 알려진 제약

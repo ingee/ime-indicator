@@ -32,5 +32,5 @@ WinForms UI 프로세스 쪽에 남긴다.
 ## Consequences
 
 - 배포 방식이 "설치 시 관리자 권한 1회 필요 + 레지스트리 등록"으로 바뀐다 — ADR-0001과
-  CLAUDE.md 7절(single-file exe, 설치 불필요)을 다시 손봐야 한다.
+  docs/ui-spec.md(single-file exe, 설치 불필요)를 다시 손봐야 한다.
 - TIP DLL과 UI EXE 사이의 IPC 방식은 별도로 결정해야 한다.
