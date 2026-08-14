@@ -58,7 +58,22 @@ Label: wayfinder:map
 
 ## Decisions so far
 
-(아직 없음 — 이 맵은 2026-08-14에 막 시작됐다)
+- **2026-08-15, [issue 01](issues/01-security-software-investigation.md) resolved — 보안/VPN
+  소프트웨어 관련성 낮음.** MagicLine4NX·Citrix 전 제품군 바이너리/이벤트 로그 모두 8/6~8/9
+  구간에 변화 없음(업데이트 가설 기각). Citrix App Protection(`epinject.sys`/`entryprotect.sys`)은
+  실재하는 anti-keylogging 커널 드라이버이지만, 공식 문서상 "보호 대상 창이 포커스를 가졌을 때만
+  활성화" — 회귀 재현 대상(Notepad/cmd.exe/Excel)이 Citrix 게시 앱이 아니라 스코프 밖일
+  가능성이 높음. 실측 종료 재테스트는 생략(사용자 상의 후 우선순위 낮음 판단). 다음은 issue 02.
+- **2026-08-15, [issue 04](issues/04-taskbar-indicator-observation.md) resolved — "최후의
+  대안"으로 보류.** `prototype/langbar-observation-poc-throwaway` 브랜치에서 9개 프로토타입으로
+  실측: 공식 TSF API(`ITfLangBarItemMgr`)는 크로스 프로세스 조회 불가, UI Automation은 상태를
+  노출 안 함(좌표 조회에는 유용), 이벤트 구독(`EVENT_OBJECT_NAMECHANGE`)은 `WINEVENT_INCONTEXT`로
+  `explorer.exe`에 콜백을 직접 로드해도 10번 중 1번만 잡힘 — 훅 방식이 아니라 `explorer.exe`
+  자신이 이벤트를 일관되게 안 낸다는 소스 레벨 결함으로 확정. 반면 폴링 기반 화면 캡처(UIA로 찾은
+  좌표 + 1초 폴링 + 픽셀 비교)는 정확성·비용(1회당 ~10ms, CPU ~1~3%) 모두 실측 검증됨. 사용자
+  판단: 폐기하지 않고 최후의 안전망으로 보류 — Windows가 어딘가엔 진짜 이벤트를 줄 거라는 신뢰를
+  아직 안 거두고, issue 02(TIP 회귀 원인 추적)를 먼저 계속 판다. 이것마저 실패하면 그때 폴링을
+  채택하되, 그 시점엔 CLAUDE.md 3절의 "폴링 금지" 원칙 자체를 재개정해야 함.
 
 ## Not yet specified
 

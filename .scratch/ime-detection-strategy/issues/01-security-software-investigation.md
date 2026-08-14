@@ -1,5 +1,5 @@
 Type: research
-Status: open
+Status: resolved
 
 ## Question
 
@@ -35,3 +35,35 @@ Status: open
 
 관련 있음/없음 판정 + 근거. 관련 있다면 이 소프트웨어를 우회하거나 함께 동작할 방법이 있는지도
 포함.
+
+## Answer
+
+**판정: 관련성 낮음.** 8/7→8/8 회귀를 이 소프트웨어들의 변화로 설명할 직접 증거는 못 찾았다.
+실측 종료 재테스트(조사할 것 3번)까지는 안 갔다 — 아래 근거로 우선순위가 낮다고 판단해 사용자와
+상의 후 생략.
+
+- **"업데이트가 원인" 가설은 기각.** MagicLine4NX·Citrix Workspace 전 제품군의 바이너리
+  수정일이 전부 2023년(최신도 2024-01-19, `MagicLine4NX_Uninstall.exe`)이고, 8/6~8/9 사이
+  Windows 이벤트 로그(Application의 `MsiInstaller`, System의 SCM)에 두 제품 언급이 전혀 없다.
+  파일 교체를 동반한 업데이트/재설치는 이 구간에 없었다.
+  - 참고로 이 구간 유일한 MSI 이벤트는 8/7 오전 `Microsoft.NET.Workloads.10.0.300` SDK
+    설치였다 — 회귀 시점과 겹치지만 보안 소프트웨어와 무관해 별개로만 기록.
+- **Citrix App Protection**(`entryprotectdrv`/`epinject6`/`epusbfilter`, 파일:
+  `entryprotect.sys`/`epinject.sys`/`epusbfilter.sys`, 전부 상시 `Running`)은 실제로 커널
+  레벨 anti-keylogging 드라이버였다(Citrix 공식 문서로 확인). 다만 공식 문서에 **"보호 대상
+  창(protected window)이 포커스를 가졌을 때만 활성화"**된다고 명시돼 있다. 회귀 재현에 쓴
+  대상(Notepad, cmd.exe, Excel)은 Citrix로 게시된 앱이 아니므로, 이 스코프 설명이 맞다면
+  전역적으로 TIP `Activate()`를 막을 이유가 약하다. 완전히 배제는 못 하지만(정책이 문서와 다르게
+  동작할 가능성, 로컬 레지스트리에서 활성화 플래그를 못 찾음 — `HKLM:\SOFTWARE\Citrix` 재귀
+  조회는 트리가 너무 깊어 PowerShell이 StackOverflow로 죽어서 서비스 키 직접 조회로만 확인)
+  유력 후보는 아니다.
+- **MagicLine4NX**는 공동인증서 로그인용 인증 미들웨어(Dreamsecurity)다. 설치된 버전은
+  `1.0.0.29`로 취약점이 보고된 `1.0.0.26` 이하보다 최신. 이 시스템의 커널 드라이버 목록에
+  Dreamsecurity 관련 드라이버가 없었고(Citrix만 발견), 키보드/TSF 후킹 관련 공개 자료도 못
+  찾았다 — 관련성 낮음.
+- **TSF/CTF 레지스트리 키 직접 조사(조사할 것 4번)는 미완료.** 위 스코프 정황상 우선순위가
+  낮아 서비스 키 수준 확인으로 갈음했다. 나중에 이슈 02나 회귀 원인이 여전히 안 풀리면
+  재검토 후보로 남겨둔다.
+
+결론적으로 이 축은 닫는다. 다음은 [issue 02](02-windows-settings-and-policy.md)(Windows
+설정/로컬 정책)로 넘어간다.
