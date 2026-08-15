@@ -233,8 +233,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID) {
         // (AdviseSink로 등록해둔 CompartmentSink의 코드/vtable이 이 DLL 안에 있는데, DLL이
         // 이미 내려가 있었음). GET_MODULE_HANDLE_EX_FLAG_PIN으로 프로세스 종료 때까지 이
         // DLL이 절대 언로드되지 않도록 고정한다 — FreeLibrary를 몇 번 불러도 안 풀린다.
+        // 버그 이력: 처음엔 GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS 없이 호출했다 — 그러면
+        // 두 번째 인자(hinstDLL, 사실은 메모리 주소)가 "모듈 이름 문자열"로 잘못 해석돼서
+        // 아무 모듈과도 안 맞아 GetModuleHandleExW가 조용히 실패하고(반환값을 안 봐서
+        // 못 알아챔) 고정이 전혀 안 됐다. Explorer가 같은 "DLL 언로드 후 dangling 콜백"
+        // 크래시로 다시 죽어서 발견 — 이 플래그가 있어야 두 번째 인자를 "이 모듈 안의 한
+        // 주소"로 올바르게 해석해 그 주소가 속한 모듈(자기 자신)을 고정한다.
         HMODULE pinned = nullptr;
-        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN,
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
                             reinterpret_cast<LPCWSTR>(hinstDLL), &pinned);
     }
     return TRUE;
