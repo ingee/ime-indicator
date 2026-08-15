@@ -2,12 +2,15 @@
 //
 // ADR-0007: 포커스가 바뀔 때마다 EVENT_SYSTEM_FOREGROUND(WINEVENT_INCONTEXT)로 이 DLL이 그
 // 순간 포커스를 얻은 프로세스 안에 실제로 로드된다. TSF가 우리를 Activate()해주길 기다리지
-// 않고, 우리가 직접 CoCreateInstance(CLSID_TF_ThreadMgr) -> Activate() ->
-// ITfCompartmentMgr QI -> GetCompartment(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE) -> AdviseSink까지
-// 건다 — src/ImeIndicatorTip/ImeStateTip.cpp가 8/7까지 정상 동작했던 "스레드 매니저 자신을
-// ITfCompartmentMgr로 직접 QI하는"(ADR-0005) 로직과 동일하다. 다른 건 오직 "누가 Activate를
-// 부르는가"(TSF 자신 vs 우리가 직접) 뿐이다. prototype/langbar-observation-poc-throwaway
-// 브랜치의 LangBarPoc11(LangBarHookDll11.cpp)로 실측 검증됨.
+// 않고, 우리가 직접 CoCreateInstance(CLSID_TF_ThreadMgr) -> Activate() -> 스레드 매니저
+// 자신을 ITfCompartmentMgr로 직접 QI(스레드 스코프, ADR-0005) ->
+// GetCompartment(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE) -> AdviseSink까지 건다. 원래
+// src/ImeIndicatorTip/ImeStateTip.cpp가 8/7까지 정상 동작했던 로직 그대로다. 새 메모장(issue
+// 02) 대응 중 GetGlobalCompartment(전역 스코프)로 바꿔 실측했으나 2026-08-16 밤 세션 3에서
+// 기각 확정(새 메모장은 여전히 실패, mintty는 오히려 회귀)돼 스레드 스코프로 되돌렸다 — 상세
+// 배경은 DoTsfInit() 주석 참고.
+// prototype/langbar-observation-poc-throwaway 브랜치의 LangBarPoc11(LangBarHookDll11.cpp)로
+// 스레드 스코프 버전이 실측 검증됨.
 //
 // 크래시 이력(fix/focus-hook-crash, 2026-08-15): 위 COM/TSF 작업을 WinEventProc 콜백
 // 안에서 직접(동기로) 실행했더니 explorer.exe가 MSCTF.dll 안에서 access violation으로
@@ -41,18 +44,15 @@
 // 때까지 언로드 불가로 고정해 해결했다.
 //
 // 알려진 한계(ADR-0007 Consequences, 이번 구현 범위 밖):
+// - 콜백 스레드가 창 소유 스레드와 다르면(실측상 Windows 11 새 메모장 등 일부 앱) TSF 작업을
+//   건너뛴다 — 마샬링 미구현. issue 02(새 메모장) 조사 중 이 필터를 없애고 windowPid만
+//   확인하도록 완화해본 적이 있다(2026-08-15) — 하지만 결과는 "건너뛴다"가 "죽은 구독이
+//   된다"로 바뀔 뿐, 실제로 그 필터 완화 덕에 성공한 사례가 한 번도 없었다. 오히려
+//   ThreadMgr 생성·leak·재시도 타이머까지 코드만 늘어나 2026-08-16 밤 세션 3에서 되돌렸다
+//   — 다음에 스레드 불일치 앱을 만나도 같은 시도를 반복하지 말 것, 창 소유 스레드가 아닌
+//   실제 입력 처리 스레드를 찾아 그쪽에서 구독하는 방향(마샬링)이 필요하다.
 // - threadMgr을 의도적으로 leak시킨다(Release 시 구독이 같이 죽을 가능성 회피) — 프로세스
 //   종료 시 OS가 정리한다.
-//
-// 2026-08-15 수정(issue 02, .scratch/focus-hook-app-coverage/issues/02-new-notepad.md):
-// 처음엔 "콜백 스레드가 창 소유 스레드와 다르면 건너뛴다"는 필터가 있었다. Windows 11 새
-// 메모장은 창 소유 스레드와 실제 입력 처리 스레드가 항상 분리돼 있어, 이 필터 때문에 매번
-// 구독 기회를 놓쳐 한/영 전환이 인디케이터에 반영되지 않았다(TSF 초기화 자체는 최초 1회
-// 우연히 스레드가 일치했을 때만 성공, 이후 재포커스마다 전부 스킵됨을 진단 로그로 실측).
-// 임시 부트스트랩 창 생성부터 DoTsfInit까지 전체 흐름이 windowTid가 아니라 "콜백이 실행 중인
-// 스레드(currentTid)"만으로 완결되므로(CreateWindowExW/PostMessageW 모두 호출 스레드
-// 기준), windowTid 일치를 요구할 근거가 애초에 없었다 — 그 대신 "이 프로세스가 포커스를
-// 받은 그 프로세스인지"(windowPid == GetCurrentProcessId())만 확인하도록 필터를 좁혔다.
 
 #include <windows.h>
 #include <initguid.h>
@@ -151,12 +151,11 @@ public:
         return S_OK;
     }
 
-    bool ReportValue() {
+    void ReportValue() {
         VARIANT v;
         VariantInit(&v);
         HRESULT hr = m_compartment->GetValue(&v);
-        bool hasValue = SUCCEEDED(hr) && v.vt == VT_I4;
-        if (hasValue) {
+        if (SUCCEEDED(hr) && v.vt == VT_I4) {
             uint32_t reportPid = ResolveReportPid();
             LogDiag("CompartmentSink::ReportValue value=%ld reportPid=%lu (selfPid=%lu)", v.lVal,
                     static_cast<unsigned long>(reportPid), GetCurrentProcessId());
@@ -165,7 +164,6 @@ public:
             LogDiag("CompartmentSink::ReportValue GetValue failed hr=0x%08lX vt=%d", hr, v.vt);
         }
         VariantClear(&v);
-        return hasValue;
     }
 
 private:
@@ -181,35 +179,22 @@ private:
 // 포커스 이벤트가 와도 중복으로 창을 만들지 않기 위함.
 static thread_local bool t_subscribed = false;
 
-// issue 02 재조사(2026-08-15 밤, .scratch/focus-hook-app-coverage/issues/02-new-notepad.md):
-// 새 메모장은 창 소유 스레드의 TSF가 아직 준비되기 전에 우리가 먼저 Activate/GetCompartment를
-// 걸면 값이 영구히 비어(VT_EMPTY) OnChange가 전혀 오지 않는 "죽은 구독"이 된다 — 실측으로
-// 성공/실패 사례를 비교해보니 구독 시점에 GetValue가 곧바로 성공한 시도만 이후 OnChange가
-// 정상 동작했다. 처음엔 "다음 포커스 전환에서 재시도"(t_subscribed를 풀어 실제 OS 포커스
-// 이벤트를 기다림)로 시도했으나, 같은 스레드가 계속 창을 갖고 있는 경우(실측: Windows 11
-// 메모장 tid=8756이 alt-tab 5회 내내 전부 실패) 사용자가 포커스를 옮기지 않으면 재시도
-// 자체가 안 걸린다는 한계가 드러났다. 그래서 포커스 전환을 기다리지 않고, 임시 부트스트랩 창의
-// 메시지 루프 자체(WM_TIMER)로 같은 스레드에서 곧바로 재시도하도록 바꿨다 — 이 앱이 영원히
-// 준비 안 되는 경우(예: Excel처럼 TSF 자체를 안 쓰는 경우)를 대비해 무한 재시도로 인한
-// 리소스 누수를 막으려 횟수는 여전히 제한한다.
-static thread_local int t_subscribeAttempts = 0;
-constexpr int kMaxSubscribeAttempts = 5;
-constexpr UINT kRetryDelayMs = 300;
-
-// 실제 TSF 작업 — WinEventProc 밖(임시 부트스트랩 창의 WndProc)에서만 호출된다. 반환값은 "이번
-// 시도에서 진짜 값을 받았는가"(true) — false면 호출자가 재시도 여부를 판단한다.
-static bool DoTsfInit() {
+// 실제 TSF 작업 — WinEventProc 밖(임시 부트스트랩 창의 WndProc)에서만 호출된다. 실패 시
+// t_subscribed를 되돌려 다음 포커스 전환에서 재시도할 수 있게 한다.
+static void DoTsfInit() {
     LogDiag("DoTsfInit: start");
 
     HRESULT hrInit = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(hrInit) && hrInit != RPC_E_CHANGED_MODE) {
         LogDiag("DoTsfInit: CoInitializeEx failed hr=0x%08lX", hrInit);
-        return false;
+        t_subscribed = false;
+        return;
     }
     if (hrInit == RPC_E_CHANGED_MODE) {
         // 이 스레드가 이미 MTA로 초기화돼 있음 — TSF 참여 불가, 건너뛴다.
         LogDiag("DoTsfInit: CoInitializeEx returned RPC_E_CHANGED_MODE (thread already MTA), skipping");
-        return false;
+        t_subscribed = false;
+        return;
     }
     LogDiag("DoTsfInit: CoInitializeEx ok hr=0x%08lX", hrInit);
 
@@ -218,7 +203,8 @@ static bool DoTsfInit() {
                                    IID_ITfThreadMgr, reinterpret_cast<void**>(&threadMgr));
     if (FAILED(hr) || !threadMgr) {
         LogDiag("DoTsfInit: CoCreateInstance(CLSID_TF_ThreadMgr) failed hr=0x%08lX", hr);
-        return false;
+        t_subscribed = false;
+        return;
     }
     LogDiag("DoTsfInit: CoCreateInstance(CLSID_TF_ThreadMgr) ok");
 
@@ -227,19 +213,28 @@ static bool DoTsfInit() {
     if (FAILED(hrActivate)) {
         LogDiag("DoTsfInit: Activate failed hr=0x%08lX", hrActivate);
         threadMgr->Release();
-        return false;
+        t_subscribed = false;
+        return;
     }
     LogDiag("DoTsfInit: Activate ok clientId=%lu", static_cast<unsigned long>(clientId));
 
+    // issue 02 시도 3(.scratch/focus-hook-app-coverage/issues/02-new-notepad.md): 창 소유
+    // 스레드(windowTid)에서 threadMgr->QueryInterface(IID_ITfCompartmentMgr)로 얻는 스레드
+    // 스코프 컴파트먼트는 새 메모장에서 영구히 죽은 구독이 된다(GetValue가 hr=S_FALSE만
+    // 반환). GetGlobalCompartment로 바꾸면 스레드를 바꾸지 않고도 살아나는지 실측했으나
+    // 2026-08-16 밤 세션 3에서 기각 확정 — 새 메모장은 여전히 죽은 구독이었고, 오히려
+    // 기존에 즉시 성공하던 mintty까지 같은 방식으로 죽은 구독이 되는 회귀가 발생했다(원인이
+    // 컴파트먼트 스코프가 아니라 스레드/COM 컨텍스트 쪽이라는 뜻). 그래서 스레드 스코프로
+    // 되돌린다.
     ITfCompartmentMgr* compartmentMgr = nullptr;
-    hr = threadMgr->QueryInterface(IID_ITfCompartmentMgr,
-                                    reinterpret_cast<void**>(&compartmentMgr));
+    hr = threadMgr->QueryInterface(IID_ITfCompartmentMgr, reinterpret_cast<void**>(&compartmentMgr));
     if (FAILED(hr) || !compartmentMgr) {
-        LogDiag("DoTsfInit: QI(ITfCompartmentMgr) failed hr=0x%08lX", hr);
+        LogDiag("DoTsfInit: QI(IID_ITfCompartmentMgr) failed hr=0x%08lX", hr);
         threadMgr->Release();
-        return false;
+        t_subscribed = false;
+        return;
     }
-    LogDiag("DoTsfInit: QI(ITfCompartmentMgr) ok");
+    LogDiag("DoTsfInit: QI(IID_ITfCompartmentMgr) ok");
 
     ITfCompartment* compartment = nullptr;
     hr = compartmentMgr->GetCompartment(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE, &compartment);
@@ -247,14 +242,15 @@ static bool DoTsfInit() {
     if (FAILED(hr) || !compartment) {
         LogDiag("DoTsfInit: GetCompartment(KEYBOARD_OPENCLOSE) failed hr=0x%08lX", hr);
         threadMgr->Release();
-        return false;
+        t_subscribed = false;
+        return;
     }
     LogDiag("DoTsfInit: GetCompartment(KEYBOARD_OPENCLOSE) ok");
 
     IpcClient_Start();
 
     CompartmentSink* sink = new CompartmentSink(compartment);
-    bool hasValue = sink->ReportValue();
+    sink->ReportValue();
 
     ITfSource* source = nullptr;
     if (SUCCEEDED(compartment->QueryInterface(IID_ITfSource, reinterpret_cast<void**>(&source))) &&
@@ -271,40 +267,20 @@ static bool DoTsfInit() {
 
     compartment->Release();
     // threadMgr을 의도적으로 안 놓는다 — Release하면 이 스레드의 ThreadMgr 자체가
-    // 해제되면서 구독도 같이 죽을 수 있다. 실패한 시도의 sink/compartment/threadMgr도
-    // 마찬가지로 의도적으로 leak — 나중에 살아날 가능성을 배제할 수 없어 굳이 정리하지 않는다.
-    LogDiag(hasValue ? "DoTsfInit: subscription complete (has value)"
-                     : "DoTsfInit: subscribed but no value yet");
-    return hasValue;
+    // 해제되면서 구독도 같이 죽을 수 있다.
+    // t_subscribed는 이미 true (FocusHookProc에서 임시 부트스트랩 창을 만들 때 미리 설정됨).
+    LogDiag("DoTsfInit: subscription complete");
 }
 
 static HINSTANCE g_hInstance = nullptr;
 static const wchar_t* kBootstrapClassName = L"ingee.ImeFocusHook.TsfInitBootstrap";
 constexpr UINT WM_INIT_TSF = WM_APP + 1;
-constexpr UINT_PTR kRetryTimerId = 1;
 
 static LRESULT CALLBACK BootstrapWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (msg == WM_INIT_TSF || msg == WM_TIMER) {
-        if (msg == WM_TIMER) {
-            KillTimer(hwnd, kRetryTimerId);
-            LogDiag("BootstrapWndProc: WM_TIMER fired, retrying DoTsfInit");
-        } else {
-            LogDiag("BootstrapWndProc: WM_INIT_TSF received, calling DoTsfInit");
-        }
-        bool hasValue = DoTsfInit();
-        if (!hasValue && ++t_subscribeAttempts < kMaxSubscribeAttempts) {
-            // 포커스 전환을 기다리지 않고 같은 스레드에서 곧바로 재시도한다 — 임시 부트스트랩 창은
-            // 살려두고 타이머로 다음 시도를 예약만 한다.
-            LogDiag("BootstrapWndProc: no value yet, retrying in %ums (attempt %d/%d)",
-                    kRetryDelayMs, t_subscribeAttempts, kMaxSubscribeAttempts);
-            SetTimer(hwnd, kRetryTimerId, kRetryDelayMs, nullptr);
-            return 0;
-        }
-        if (!hasValue) {
-            LogDiag("BootstrapWndProc: no value after %d attempts, giving up retries",
-                    t_subscribeAttempts);
-        }
-        DestroyWindow(hwnd);  // 부트스트랩 1회용 — 끝나면(성공하거나 재시도를 소진하면) 없앤다.
+    if (msg == WM_INIT_TSF) {
+        LogDiag("BootstrapWndProc: WM_INIT_TSF received, calling DoTsfInit");
+        DoTsfInit();
+        DestroyWindow(hwnd);  // 부트스트랩 1회용 — 끝나면 바로 없앤다.
         return 0;
     }
     return DefWindowProcW(hwnd, msg, wParam, lParam);
@@ -335,20 +311,12 @@ extern "C" __declspec(dllexport) void CALLBACK FocusHookProc(HWINEVENTHOOK, DWOR
     // .scratch/focus-hook-app-coverage/issues/01-cmd-conhost.md 조사할 것 #3을 판정 가능.
     LogDiag("FocusHookProc: windowPid=%lu windowTid=%lu currentPid=%lu currentTid=%lu",
             windowPid, windowTid, GetCurrentProcessId(), GetCurrentThreadId());
-    if (windowPid != GetCurrentProcessId()) {
-        // 이 프로세스에 인젝션된 DLL이 자기 프로세스가 아닌 다른 프로세스의 포커스 이벤트를
-        // 관측 중 — 예: 훅을 설치한 로더 자신에게도 WINEVENT_INCONTEXT 이벤트가 온다. 건너뛴다.
-        LogDiag("FocusHookProc: process mismatch (windowPid=%lu != currentPid=%lu), skipping",
-                windowPid, GetCurrentProcessId());
+    if (windowTid != GetCurrentThreadId()) {
+        // 콜백 스레드가 창 소유 스레드와 다름 — 마샬링 미구현, 이번 포커스 전환은 건너뛴다.
+        LogDiag("FocusHookProc: thread mismatch (windowTid=%lu != currentTid=%lu), skipping",
+                windowTid, GetCurrentThreadId());
         return;
     }
-    // 창 소유 스레드(windowTid)와 이 콜백이 실행 중인 스레드(currentTid)가 다를 수 있다
-    // (.scratch/focus-hook-app-coverage/issues/02-new-notepad.md 실측: Windows 11 새 메모장은
-    // 창 소유 스레드와 실제 입력을 처리하는 스레드가 분리돼 있어, 매번 다른 스레드에서 콜백이
-    // 실행된다). 이전엔 windowTid != currentTid일 때 건너뛰었으나, 그러면 이런 앱에서는 영원히
-    // 구독 기회를 못 얻는다 — 이 콜백이 실행 중인 스레드 자체에서 임시 부트스트랩 창을 만들고 TSF를
-    // 구독하는 흐름은 windowTid와 무관하게 currentTid만으로 완결되므로(CreateWindowExW/
-    // PostMessageW/DoTsfInit 전부 호출 스레드 기준), windowTid 일치를 요구할 이유가 없었다.
 
     // 이 시점부터 "구독 시도함"으로 표시 — DoTsfInit은 임시 부트스트랩 창이 WM_INIT_TSF를 받을 때
     // (이 콜백을 벗어난 뒤) 실행되므로, 그 전에 같은 스레드에 또 포커스 이벤트가 와도 중복
