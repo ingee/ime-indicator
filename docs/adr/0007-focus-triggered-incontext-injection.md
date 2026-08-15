@@ -87,5 +87,15 @@ x64+Win32)로 옮겨 실제 구현했다. `src/ImeIndicator`(UI/IPC 쪽)는 계�
 사용자가 메모장을 포함한 여러 앱과 **Excel**을 오가며 한/영 전환을 직접 검증 — 전부 정확히
 반영됨을 확인("완벽해"). 프로토타입 단계에서만 확인됐던 것이 실제 프로덕션 코드 경로로도
 재현됨을 확정. 이번 구현 범위 밖으로 남긴 항목(스레드 마샬링, `cmd.exe`/`conhost.exe` 재검증,
-크래시 자동 재시작, `docs/ui-spec.md` 갱신, `src/ImeIndicatorTip` 정리)은 여전히 미착수 —
+크래시 자동 재시작, `docs/ui-spec.md` 갱신)은 여전히 미착수 —
 `.scratch/ime-detection-strategy/map.md`의 "Not yet specified" 참고.
+
+## Update — `src/ImeIndicatorTip` 완전 제거 (2026-08-15, 같은 날)
+
+Consequences 절에 적어둔 "당장 삭제하지 않는다"는 유보를 철회한다 — 실사용 검증까지 끝나
+"새 구현이 이를 완전히 대체"하는 조건이 충족됐다고 판단, `src/ImeIndicatorTip/` 프로젝트
+전체를 삭제하고 `ImeIndicator.slnx`에서 참조를 제거했다. 이 프로젝트가 남긴 Windows 레지스트리
+흔적(HKLM CLSID 등록, `HKLM`/`HKLM\...\WOW6432Node`의 CTF TIP 카테고리·언어 프로필 등록,
+HKCU의 per-user Enable 플래그 — 총 4곳, 옛 CLSID `{8CD02B2A-...}`는 이미 깨끗했음)도 함께
+정리했다. `IpcClient.cpp`(재사용된 파일)와 스레드 스코프 컴파트먼트 QI 패턴은 `src/ImeFocusHook/`
+쪽에 이미 옮겨져 있으므로 유실되는 로직은 없다.

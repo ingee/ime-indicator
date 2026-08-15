@@ -50,15 +50,17 @@ TIP 기반 접근(ADR-0001~0006)은 2026-08-07까지는 정상 동작을 확인�
 지원. ADR-0003의 "TIP 자동 로드" 전제와 issue 02의 회귀 원인은 더 이상 풀어야 할 문제가 아니다.
 
 프로토타입은 `prototype/langbar-observation-poc-throwaway` 브랜치의 `LangBarPoc10`/
-`LangBarPoc10-x86`/`LangBarPoc11`에 있고, 실제 프로덕션 구현(`src/`)은 아직 이 프로토타입을
-반영하지 않은 채로 남아 있다 — 다음 세션의 주요 작업. 남은 위험(스레드 마샬링, 크래시 블라스트
-반경, AV/EDR 오탐, 포커스별 재구독)은 ADR-0007 Consequences 절 참고.
+`LangBarPoc10-x86`/`LangBarPoc11`에 있다. **실제 프로덕션 구현도 같은 날 `src/ImeFocusHook/`
+(훅 DLL + 로더 EXE, x64+x86)로 완료됐고, 사용자가 Excel 포함 여러 앱에서 한/영 전환을 직접
+검증했다**(ADR-0007 Update 절). 옛 TIP 프로젝트 `src/ImeIndicatorTip/`는 완전히 대체돼
+삭제했고, 그 레지스트리 등록(HKLM CLSID, CTF TIP 프로필/카테고리, HKCU Enable 플래그)도
+정리했다. 남은 위험(스레드 마샬링, 크래시 블라스트 반경, AV/EDR 오탐, 포커스별 재구독,
+`cmd.exe`/`conhost.exe` 재검증)은 ADR-0007 Consequences 절과 map.md "Not yet specified"
+참고 — 전부 다음 작업으로 남아 있다.
 
 진행 상황과 다음 시도는 아래 Agent skills의 Issue tracker 절이 가리키는 wayfinder 맵을
-따른다. 구현 설계 자체는 `docs/adr/0002`~`0007`과 `src/ImeIndicatorTip/`, `src/ImeIndicator/`
-코드가 최신 출처다(코드가 실제로 하는 일과 이 문서가 어긋나면 코드를 신뢰할 것 — 단, `src/`는
-아직 새 아키텍처를 반영하지 않았으므로 새 진입점 관련해서는 프로토타입 브랜치와 ADR-0007이
-우선한다).
+따른다. 구현 설계 자체는 `docs/adr/0002`~`0007`과 `src/ImeFocusHook/`, `src/ImeIndicator/`
+코드가 최신 출처다(코드가 실제로 하는 일과 이 문서가 어긋나면 코드를 신뢰할 것).
 
 ## 5. 참고
 
