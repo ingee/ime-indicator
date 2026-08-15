@@ -73,8 +73,11 @@ TIP 기반 접근(ADR-0001~0006)은 2026-08-07까지는 정상 동작을 확인�
 
 ### Issue tracker
 
-`.scratch/`의 로컬 마크다운 — `docs/agents/issue-tracker.md` 참고. 현재 진행 중인 아키텍처
-재검토는 [`ime-detection-strategy` map](.scratch/ime-detection-strategy/map.md).
+`.scratch/`의 로컬 마크다운 — `docs/agents/issue-tracker.md` 참고. 현재 진행 중인 조사는
+[`focus-hook-app-coverage` map](.scratch/focus-hook-app-coverage/map.md)(ADR-0007 구현 이후
+반응하지 않는 것으로 발견된 4개 앱 대응). 이전 아키텍처 재검토
+[`ime-detection-strategy` map](.scratch/ime-detection-strategy/map.md)은 destination에
+도달해 참고용으로만 남아 있다.
 
 ### Domain docs
 

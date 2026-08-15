@@ -50,7 +50,69 @@
 #include <initguid.h>
 #include <msctf.h>
 
+#include <cstdarg>
+#include <cstdio>
+
 #include "IpcClient.h"
+
+// 진단용 임시 로그 (.scratch/focus-hook-app-coverage/issues/01-cmd-conhost.md) — cmd.exe/
+// conhost.exe/mintty/새 메모장에서 어느 단계까지 도달하는지 확인하기 위함. 원인이 밝혀지면
+// 제거한다. %TEMP%\ImeFocusHookDll.diag.log에 append로 쌓인다 — 여러 프로세스가 동시에
+// 써도 FILE_APPEND_DATA는 매 WriteFile 호출을 파일 끝으로 원자적으로 이동시키므로 줄 단위로는
+// 안전하다.
+static void LogDiag(const char* fmt, ...) {
+    wchar_t path[MAX_PATH] = {};
+    DWORD len = GetTempPathW(MAX_PATH, path);
+    if (len == 0 || len >= MAX_PATH) return;
+    if (wcscat_s(path, MAX_PATH, L"ImeFocusHookDll.diag.log") != 0) return;
+
+    HANDLE file = CreateFileW(path, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                               OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE) return;
+
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    char line[512];
+    int prefixLen = sprintf_s(line, "%04u-%02u-%02u %02u:%02u:%02u.%03u pid=%lu tid=%lu ",
+                               st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
+                               st.wMilliseconds, GetCurrentProcessId(), GetCurrentThreadId());
+    if (prefixLen > 0 && prefixLen < static_cast<int>(sizeof(line)) - 2) {
+        va_list args;
+        va_start(args, fmt);
+        int msgLen = vsprintf_s(line + prefixLen, sizeof(line) - prefixLen - 2, fmt, args);
+        va_end(args);
+        if (msgLen > 0) {
+            prefixLen += msgLen;
+            line[prefixLen] = '\r';
+            line[prefixLen + 1] = '\n';
+            DWORD written = 0;
+            WriteFile(file, line, static_cast<DWORD>(prefixLen + 2), &written, nullptr);
+        }
+    }
+    CloseHandle(file);
+}
+
+// cmd.exe 같은 콘솔 앱은 이 DLL이 실제로 주입되는 프로세스(conhost.exe, TSF Compartment의
+// 진짜 소유자)와 사용자 눈에 보이는 최상위 창의 소유 프로세스(cmd.exe)가 다르다 — 실측 확인
+// (.scratch/focus-hook-app-coverage/issues/01-cmd-conhost.md). UI 쪽 ForegroundWindowTracker
+// 는 GetForegroundWindow()로 "지금 포커스" PID를 구하는데, 그건 항상 cmd.exe를 가리키므로
+// GetCurrentProcessId()(conhost)를 그대로 보고하면 UI의 PID→상태 테이블에서 영원히 매치가
+// 안 된다. 두 쪽이 같은 API(GetForegroundWindow())로 같은 순간의 PID를 구하면 구조적으로
+// 항상 일치한다 — 일반 앱(창 소유 프로세스 = 주입된 프로세스)에서는 기존과 동일한 값이 나와
+// 회귀가 없다.
+static uint32_t ResolveReportPid() {
+    HWND foreground = GetForegroundWindow();
+    if (!foreground) {
+        LogDiag("ResolveReportPid: GetForegroundWindow returned NULL, falling back to selfPid=%lu",
+                GetCurrentProcessId());
+        return GetCurrentProcessId();
+    }
+    DWORD pid = 0;
+    GetWindowThreadProcessId(foreground, &pid);
+    LogDiag("ResolveReportPid: foregroundHwnd=%p resolvedPid=%lu selfPid=%lu", foreground,
+            static_cast<unsigned long>(pid), GetCurrentProcessId());
+    return pid != 0 ? pid : GetCurrentProcessId();
+}
 
 class CompartmentSink : public ITfCompartmentEventSink {
 public:
@@ -76,6 +138,7 @@ public:
     }
 
     STDMETHODIMP OnChange(REFGUID) override {
+        LogDiag("CompartmentSink::OnChange fired");
         ReportValue();
         return S_OK;
     }
@@ -85,7 +148,12 @@ public:
         VariantInit(&v);
         HRESULT hr = m_compartment->GetValue(&v);
         if (SUCCEEDED(hr) && v.vt == VT_I4) {
-            IpcClient_ReportState(GetCurrentProcessId(), v.lVal != 0);
+            uint32_t reportPid = ResolveReportPid();
+            LogDiag("CompartmentSink::ReportValue value=%ld reportPid=%lu (selfPid=%lu)", v.lVal,
+                    static_cast<unsigned long>(reportPid), GetCurrentProcessId());
+            IpcClient_ReportState(reportPid, v.lVal != 0);
+        } else {
+            LogDiag("CompartmentSink::ReportValue GetValue failed hr=0x%08lX vt=%d", hr, v.vt);
         }
         VariantClear(&v);
     }
@@ -106,49 +174,63 @@ static thread_local bool t_subscribed = false;
 // 실제 TSF 작업 — WinEventProc 밖(트램폴린 창의 WndProc)에서만 호출된다. 실패 시
 // t_subscribed를 되돌려 다음 포커스 전환에서 재시도할 수 있게 한다.
 static void DoTsfInit() {
+    LogDiag("DoTsfInit: start");
+
     HRESULT hrInit = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(hrInit) && hrInit != RPC_E_CHANGED_MODE) {
+        LogDiag("DoTsfInit: CoInitializeEx failed hr=0x%08lX", hrInit);
         t_subscribed = false;
         return;
     }
     if (hrInit == RPC_E_CHANGED_MODE) {
         // 이 스레드가 이미 MTA로 초기화돼 있음 — TSF 참여 불가, 건너뛴다.
+        LogDiag("DoTsfInit: CoInitializeEx returned RPC_E_CHANGED_MODE (thread already MTA), skipping");
         t_subscribed = false;
         return;
     }
+    LogDiag("DoTsfInit: CoInitializeEx ok hr=0x%08lX", hrInit);
 
     ITfThreadMgr* threadMgr = nullptr;
     HRESULT hr = CoCreateInstance(CLSID_TF_ThreadMgr, nullptr, CLSCTX_INPROC_SERVER,
                                    IID_ITfThreadMgr, reinterpret_cast<void**>(&threadMgr));
     if (FAILED(hr) || !threadMgr) {
+        LogDiag("DoTsfInit: CoCreateInstance(CLSID_TF_ThreadMgr) failed hr=0x%08lX", hr);
         t_subscribed = false;
         return;
     }
+    LogDiag("DoTsfInit: CoCreateInstance(CLSID_TF_ThreadMgr) ok");
 
     TfClientId clientId = 0;
-    if (FAILED(threadMgr->Activate(&clientId))) {
+    HRESULT hrActivate = threadMgr->Activate(&clientId);
+    if (FAILED(hrActivate)) {
+        LogDiag("DoTsfInit: Activate failed hr=0x%08lX", hrActivate);
         threadMgr->Release();
         t_subscribed = false;
         return;
     }
+    LogDiag("DoTsfInit: Activate ok clientId=%lu", static_cast<unsigned long>(clientId));
 
     ITfCompartmentMgr* compartmentMgr = nullptr;
     hr = threadMgr->QueryInterface(IID_ITfCompartmentMgr,
                                     reinterpret_cast<void**>(&compartmentMgr));
     if (FAILED(hr) || !compartmentMgr) {
+        LogDiag("DoTsfInit: QI(ITfCompartmentMgr) failed hr=0x%08lX", hr);
         threadMgr->Release();
         t_subscribed = false;
         return;
     }
+    LogDiag("DoTsfInit: QI(ITfCompartmentMgr) ok");
 
     ITfCompartment* compartment = nullptr;
     hr = compartmentMgr->GetCompartment(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE, &compartment);
     compartmentMgr->Release();
     if (FAILED(hr) || !compartment) {
+        LogDiag("DoTsfInit: GetCompartment(KEYBOARD_OPENCLOSE) failed hr=0x%08lX", hr);
         threadMgr->Release();
         t_subscribed = false;
         return;
     }
+    LogDiag("DoTsfInit: GetCompartment(KEYBOARD_OPENCLOSE) ok");
 
     IpcClient_Start();
 
@@ -159,15 +241,20 @@ static void DoTsfInit() {
     if (SUCCEEDED(compartment->QueryInterface(IID_ITfSource, reinterpret_cast<void**>(&source))) &&
         source) {
         DWORD cookie = TF_INVALID_COOKIE;
-        source->AdviseSink(IID_ITfCompartmentEventSink,
-                            static_cast<ITfCompartmentEventSink*>(sink), &cookie);
+        HRESULT hrAdvise = source->AdviseSink(IID_ITfCompartmentEventSink,
+                                               static_cast<ITfCompartmentEventSink*>(sink), &cookie);
+        LogDiag("DoTsfInit: AdviseSink hr=0x%08lX cookie=%lu", hrAdvise,
+                static_cast<unsigned long>(cookie));
         source->Release();
+    } else {
+        LogDiag("DoTsfInit: QI(ITfSource) failed");
     }
 
     compartment->Release();
     // threadMgr을 의도적으로 안 놓는다 — Release하면 이 스레드의 ThreadMgr 자체가
     // 해제되면서 구독도 같이 죽을 수 있다.
     // t_subscribed는 이미 true (FocusHookProc에서 트램폴린 창을 만들 때 미리 설정됨).
+    LogDiag("DoTsfInit: subscription complete");
 }
 
 static HINSTANCE g_hInstance = nullptr;
@@ -176,6 +263,7 @@ constexpr UINT WM_INIT_TSF = WM_APP + 1;
 
 static LRESULT CALLBACK TrampolineWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_INIT_TSF) {
+        LogDiag("TrampolineWndProc: WM_INIT_TSF received, calling DoTsfInit");
         DoTsfInit();
         DestroyWindow(hwnd);  // 부트스트랩 1회용 — 끝나면 바로 없앤다.
         return 0;
@@ -203,8 +291,15 @@ extern "C" __declspec(dllexport) void CALLBACK FocusHookProc(HWINEVENTHOOK, DWOR
 
     DWORD windowPid = 0;
     DWORD windowTid = hwnd ? GetWindowThreadProcessId(hwnd, &windowPid) : 0;
+    // windowPid와 GetCurrentProcessId()가 다르면 "PID 스왑"(예: cmd.exe의 hwnd인데 실제
+    // 인젝션은 conhost.exe에서 도는 경우) 여부를 여기서 바로 알 수 있다 — 이 로그만으로도
+    // .scratch/focus-hook-app-coverage/issues/01-cmd-conhost.md 조사할 것 #3을 판정 가능.
+    LogDiag("FocusHookProc: windowPid=%lu windowTid=%lu currentPid=%lu currentTid=%lu",
+            windowPid, windowTid, GetCurrentProcessId(), GetCurrentThreadId());
     if (windowTid != GetCurrentThreadId()) {
         // 콜백 스레드가 창 소유 스레드와 다름 — 마샬링 미구현, 이번 포커스 전환은 건너뛴다.
+        LogDiag("FocusHookProc: thread mismatch (windowTid=%lu != currentTid=%lu), skipping",
+                windowTid, GetCurrentThreadId());
         return;
     }
 
@@ -213,15 +308,20 @@ extern "C" __declspec(dllexport) void CALLBACK FocusHookProc(HWINEVENTHOOK, DWOR
     // 생성을 막는다.
     t_subscribed = true;
     if (!EnsureTrampolineClassRegistered()) {
+        LogDiag("FocusHookProc: EnsureTrampolineClassRegistered failed, err=%lu", GetLastError());
         t_subscribed = false;
         return;
     }
     HWND trampoline = CreateWindowExW(0, kTrampolineClassName, nullptr, 0, 0, 0, 0, 0,
                                        HWND_MESSAGE, nullptr, g_hInstance, nullptr);
     if (!trampoline || !PostMessageW(trampoline, WM_INIT_TSF, 0, 0)) {
+        LogDiag("FocusHookProc: trampoline create/post failed, trampoline=%p err=%lu",
+                trampoline, GetLastError());
         if (trampoline) DestroyWindow(trampoline);
         t_subscribed = false;
+        return;
     }
+    LogDiag("FocusHookProc: trampoline hwnd=%p created, WM_INIT_TSF posted", trampoline);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID) {

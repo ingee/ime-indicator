@@ -19,6 +19,22 @@ internal struct RECT
     internal int Bottom;
 }
 
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+internal struct PROCESSENTRY32
+{
+    internal uint dwSize;
+    internal uint cntUsage;
+    internal uint th32ProcessID;
+    internal IntPtr th32DefaultHeapID;
+    internal uint th32ModuleID;
+    internal uint cntThreads;
+    internal uint th32ParentProcessID;
+    internal int pcPriClassBase;
+    internal uint dwFlags;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+    internal string szExeFile;
+}
+
 internal static class NativeMethods
 {
     internal const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
@@ -67,6 +83,21 @@ internal static class NativeMethods
 
     [DllImport("user32.dll")]
     internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    internal const uint TH32CS_SNAPPROCESS = 0x00000002;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
+
+    [DllImport("kernel32.dll")]
+    internal static extern bool Process32First(IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
+
+    [DllImport("kernel32.dll")]
+    internal static extern bool Process32Next(IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool CloseHandle(IntPtr hObject);
 
     // 주어진 화면 영역이 속한 모니터의 실제 DPI를 조회한다. 조회에 실패하면 96(100%)으로 간주한다.
     internal static int GetDpiForBounds(Rectangle bounds)

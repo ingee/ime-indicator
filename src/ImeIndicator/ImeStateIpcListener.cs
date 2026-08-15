@@ -80,6 +80,7 @@ internal sealed class ImeStateIpcListener : IDisposable
 
     private void UpdateTable(uint pid, bool isKoreanOpen)
     {
+        DiagLog.Log($"ImeStateIpcListener: received pid={pid} isKoreanOpen={isKoreanOpen}");
         lock (_tableLock)
         {
             _pidStateTable[pid] = isKoreanOpen;
@@ -108,7 +109,15 @@ internal sealed class ImeStateIpcListener : IDisposable
             snapshot = new Dictionary<uint, bool>(_pidStateTable);
         }
 
-        ImeState resolved = ForegroundStateResolver.Resolve(_foregroundTracker.CurrentForegroundPid, snapshot, _stateStore.Current);
+        uint foregroundPid = _foregroundTracker.CurrentForegroundPid;
+        bool hasEntry = snapshot.TryGetValue(foregroundPid, out bool reportedKoreanOpen);
+        // 직접 매치될 때는 프로세스 트리 스냅샷(부모-자식 조회)이 필요 없다 — 폴백 경로에서만
+        // 찍는다(ForegroundStateResolver.Resolve의 parentPids 파라미터 주석 참고).
+        IReadOnlyDictionary<uint, uint>? parentPids = hasEntry ? null : ProcessTree.SnapshotParentPids();
+        ImeState resolved = ForegroundStateResolver.Resolve(foregroundPid, snapshot, _stateStore.Current, parentPids);
+        DiagLog.Log($"ImeStateIpcListener.Apply: foregroundPid={foregroundPid} hasEntry={hasEntry} " +
+                     $"reportedKoreanOpen={reportedKoreanOpen} resolved={resolved} current={_stateStore.Current} " +
+                     $"tableKeys=[{string.Join(",", snapshot.Keys)}]");
         if (resolved != _stateStore.Current)
         {
             _stateStore.Set(resolved);

@@ -9,7 +9,15 @@ internal sealed class ForegroundWindowTracker : IDisposable
 {
     internal event Action<uint>? ForegroundPidChanged;
 
-    internal uint CurrentForegroundPid { get; private set; }
+    // 콘솔 앱(cmd.exe)은 포커스 전환 시 EVENT_SYSTEM_FOREGROUND가 짧은 간격(수 ms)으로 두 번
+    // 발생한다 — 처음엔 cmd.exe 소유 창, 곧이어 conhost.exe(TSF Compartment의 진짜 소유자)
+    // 소유의 실제 콘솔 창(.scratch/focus-hook-app-coverage/issues/01-cmd-conhost.md 실측).
+    // OUTOFCONTEXT 훅은 이 두 번째 이벤트를 놓치는 경우가 있어(마샬링 경합으로 추정), 값을
+    // 훅 콜백에서 캐시해두면 그 유실된 순간의 낡은 PID가 계속 남는다. 그래서 캐시하지 않고
+    // 조회할 때마다(Apply() 등 실제 판단이 필요한 시점마다) 매번 새로 조회한다 — 훅 콜백은
+    // "지금 다시 판단해야 한다"는 신호로만 쓰고, 그 순간 GetForegroundWindow()는 폴링이 아니라
+    // 실제 이벤트(훅 발화 또는 IPC 보고 수신)에 반응해서만 호출된다.
+    internal uint CurrentForegroundPid => GetForegroundPid();
 
     // 델리게이트를 필드로 들고 있지 않으면 GC가 수거해서 네이티브 콜백이 끊길 수 있다.
     private readonly WinEventProc _foregroundChangedCallback;
@@ -18,10 +26,6 @@ internal sealed class ForegroundWindowTracker : IDisposable
     internal ForegroundWindowTracker()
     {
         _foregroundChangedCallback = OnForegroundWindowChanged;
-
-        // 훅 이벤트는 "바뀔 때"만 오므로, 시작 시 1회는 직접 조회해 초기값을 채운다
-        // (CLAUDE.md 4절 — 이후로는 콜백에만 의존).
-        CurrentForegroundPid = GetForegroundPid();
 
         _hook = NativeMethods.SetWinEventHook(
             NativeMethods.EVENT_SYSTEM_FOREGROUND,
@@ -36,7 +40,7 @@ internal sealed class ForegroundWindowTracker : IDisposable
     private void OnForegroundWindowChanged(
         IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
     {
-        CurrentForegroundPid = GetForegroundPid();
+        DiagLog.Log($"ForegroundWindowTracker: eventHwnd={hwnd} liveForegroundPid={CurrentForegroundPid}");
         ForegroundPidChanged?.Invoke(CurrentForegroundPid);
     }
 

@@ -7,11 +7,27 @@ internal static class ForegroundStateResolver
     internal static ImeState Resolve(
         uint currentForegroundPid,
         IReadOnlyDictionary<uint, bool> pidStateTable,
-        ImeState lastKnownState)
+        ImeState lastKnownState,
+        IReadOnlyDictionary<uint, uint>? parentPids = null)
     {
         if (pidStateTable.TryGetValue(currentForegroundPid, out bool isKoreanOpen))
         {
             return isKoreanOpen ? ImeState.Korean : ImeState.English;
+        }
+
+        // cmd.exe처럼, TSF Compartment를 실제로 보고하는 프로세스(conhost.exe)가 눈에 보이는
+        // foreground 프로세스의 자식인 경우가 있다(.scratch/focus-hook-app-coverage/issues/
+        // 01-cmd-conhost.md 실측). 직접 매치가 안 되면 테이블에 보고된 PID 중 foreground PID를
+        // 부모로 둔 것을 대신 찾는다.
+        if (parentPids is not null)
+        {
+            foreach (var (pid, isKoreanOpenEntry) in pidStateTable)
+            {
+                if (parentPids.TryGetValue(pid, out uint parentPid) && parentPid == currentForegroundPid)
+                {
+                    return isKoreanOpenEntry ? ImeState.Korean : ImeState.English;
+                }
+            }
         }
 
         // 이 PID의 보고가 아직 없음(텍스트 입력을 받지 않는 창 등) — CLAUDE.md 4절:
