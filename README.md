@@ -43,6 +43,9 @@ ImeFocusHookLoader.exe`, `FocusHook\x86\ImeFocusHookLoader.exe`)를 함께 띄�
 
 필요한 도구: .NET 8 SDK, Visual Studio Build Tools(C++ 워크로드, MSVC v145 툴셋).
 
+> `scripts/build-release.ps1`이 준비돼 있다. 필요한 산출물을 빌드해서 `release/`로
+> 복사한다.
+
 1. 네이티브 hook(`src/ImeFocusHook/`)을 64비트(x64)와 32비트(Win32) 두 가지로 빌드한다
    (Developer PowerShell 등 MSVC 환경이 잡힌 셸에서):
 
