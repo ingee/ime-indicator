@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using System.Diagnostics;
+
 namespace ImeIndicator;
 
 static class Program
@@ -43,6 +46,56 @@ static class Program
         catch (IOException)
         {
         }
+
+        // ADR-0007: 포커스가 바뀔 때마다 그 프로세스 안에 직접 주입해 TSF 상태를 구독하는
+        // 훅 로더 두 개(x64/x86, 비트니스가 대상 프로세스와 같아야 인프로세스 주입이 되므로
+        // 둘 다 필요)를 기동한다. 네이티브 산출물이 아직 안 빌드됐으면(FocusHook 폴더 없음)
+        // 조용히 건너뛴다 — TIP 없이도 인디케이터가 기본값으로 계속 뜨는 것과 같은 방어적
+        // 처리다. 이 앱이 끝날 때 같이 정리한다(재실행 시 프로세스 누적 방지 — 로더 쪽
+        // 뮤텍스가 2차 방어선).
+        static List<Process> StartFocusHookLoaders()
+        {
+            var started = new List<Process>();
+            foreach (var arch in new[] { "x64", "x86" })
+            {
+                string exePath = Path.Combine(AppContext.BaseDirectory, "FocusHook", arch, "ImeFocusHookLoader.exe");
+                if (!File.Exists(exePath))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var process = Process.Start(new ProcessStartInfo(exePath) { UseShellExecute = false });
+                    if (process is not null)
+                    {
+                        started.Add(process);
+                    }
+                }
+                catch (Win32Exception)
+                {
+                }
+            }
+            return started;
+        }
+
+        var focusHookProcesses = StartFocusHookLoaders();
+        Application.ApplicationExit += (_, _) =>
+        {
+            foreach (var process in focusHookProcesses)
+            {
+                try
+                {
+                    if (!process.HasExited)
+                    {
+                        process.Kill();
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+        };
 
         // 창 생성 도중의 DPI 협상 과정(WM_DPICHANGED 연쇄)이 불안정한 것으로 확인되어,
         // 앱이 완전히 시작을 마친 뒤(Idle) 각 창의 크기/위치를 한 번 더 확실하게 재보정한다.

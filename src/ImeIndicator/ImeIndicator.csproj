@@ -9,4 +9,31 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
 
+  <!--
+    ADR-0007: src/ImeFocusHook(네이티브 x64/Win32 vcxproj 2개)의 빌드 산출물을 이 앱의 출력
+    폴더로 복사한다. Program.cs가 여기서 두 로더 EXE를 실행한다. 네이티브 프로젝트가 아직
+    안 빌드됐으면(파일 없음) 경고만 내고 넘어간다 — C# 단독 빌드/개발 흐름을 막지 않기 위해.
+  -->
+  <Target Name="CopyFocusHookBinaries" AfterTargets="Build">
+    <PropertyGroup>
+      <FocusHookSrcDir>$(MSBuildProjectDirectory)\..\ImeFocusHook\</FocusHookSrcDir>
+    </PropertyGroup>
+
+    <ItemGroup Condition="Exists('$(FocusHookSrcDir)x64\$(Configuration)\ImeFocusHookLoader.exe')">
+      <FocusHookX64Files Include="$(FocusHookSrcDir)x64\$(Configuration)\ImeFocusHookDll.dll" />
+      <FocusHookX64Files Include="$(FocusHookSrcDir)x64\$(Configuration)\ImeFocusHookLoader.exe" />
+    </ItemGroup>
+    <!-- Win32 플랫폼은 vcxproj 기본 OutDir 관례상 플랫폼 이름 세그먼트 없이 $(Configuration)\로 바로 떨어진다(x64와 다름 - 실측 확인). -->
+    <ItemGroup Condition="Exists('$(FocusHookSrcDir)$(Configuration)\ImeFocusHookLoader.exe')">
+      <FocusHookX86Files Include="$(FocusHookSrcDir)$(Configuration)\ImeFocusHookDll.dll" />
+      <FocusHookX86Files Include="$(FocusHookSrcDir)$(Configuration)\ImeFocusHookLoader.exe" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(FocusHookX64Files)" DestinationFolder="$(OutDir)FocusHook\x64\" Condition="'@(FocusHookX64Files)' != ''" />
+    <Copy SourceFiles="@(FocusHookX86Files)" DestinationFolder="$(OutDir)FocusHook\x86\" Condition="'@(FocusHookX86Files)' != ''" />
+
+    <Warning Text="ImeFocusHookDll/Loader(x64) 네이티브 빌드 산출물이 없습니다 - src/ImeFocusHook를 x64로 먼저 빌드하세요." Condition="'@(FocusHookX64Files)' == ''" />
+    <Warning Text="ImeFocusHookDll/Loader(Win32/x86) 네이티브 빌드 산출물이 없습니다 - src/ImeFocusHook를 Win32로 먼저 빌드하세요." Condition="'@(FocusHookX86Files)' == ''" />
+  </Target>
+
 </Project>

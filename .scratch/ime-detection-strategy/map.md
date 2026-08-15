@@ -94,6 +94,9 @@ Label: wayfinder:map
   ("TIP `Activate()` 회귀 원인")는 더 이상 풀 이유가 없어져 "무관해짐"으로 resolved 처리.
   **이 맵은 destination에 도달했다** — 이후 세션에서는 참고용으로만 남는다. 실제 프로덕션
   구현(`src/`에 새 아키텍처 반영)은 아직 착수 전이며 별도 작업으로 넘어간다.
+- **2026-08-15, 같은 세션 내 프로덕션 구현 + 실사용 검증 완료.** `src/ImeFocusHook/`로 이식,
+  사용자가 Excel 포함 여러 앱에서 한/영 전환을 직접 검증해 전부 정확히 반영됨을 확인("완벽해").
+  상세는 ADR-0007 Update 절과 issue 07 Update 절 참고.
 
 ## Not yet specified
 

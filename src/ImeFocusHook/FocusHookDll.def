@@ -1,0 +1,3 @@
+LIBRARY ImeFocusHookDll
+EXPORTS
+    FocusHookProc

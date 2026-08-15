@@ -2,6 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/ImeIndicator/ImeIndicator.csproj" />
     <Project Path="src/ImeIndicatorTip/ImeIndicatorTip.vcxproj" />
+    <Project Path="src/ImeFocusHook/ImeFocusHookDll.vcxproj" />
+    <Project Path="src/ImeFocusHook/ImeFocusHookLoader.vcxproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ImeIndicator.Tests/ImeIndicator.Tests.csproj" />

@@ -171,3 +171,12 @@ mintty에서도 `Activate`~`AdviseSink`까지는 성공(그 창들에서는 한/
 **다음 결정 지점**: `.scratch/ime-detection-strategy/map.md`의 destination(CLAUDE.md 3~4절
 갱신)에 반영할 선택지 — 이 아키텍처를 정식 채택할지, issue 02(회귀 원인 규명)를 계속 병행할지는
 사용자와 상의 필요.
+
+## Update — 정식 채택 + 프로덕션 구현 검증 (2026-08-15)
+
+사용자가 이 아키텍처를 정식 채택하기로 확정([ADR-0007](../../../docs/adr/0007-focus-triggered-incontext-injection.md)).
+같은 날 `src/ImeFocusHook/`로 프로덕션 구현까지 완료(프로토타입 대비 변경점은 ADR-0007 Update
+절 참고 — `thread_local` 구독 플래그, 뮤텍스 단일 인스턴스 가드 등). 사용자가 메모장을 포함한
+여러 앱과 **Excel**을 오가며 한/영 전환을 직접 검증해 전부 정확히 반영됨을 확인했다("완벽해").
+프로토타입 단계 실측이 실제 `src/` 코드 경로로도 그대로 재현됨을 확정 — 이 이슈는 완전히
+종결됐다.

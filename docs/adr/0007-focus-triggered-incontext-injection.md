@@ -70,3 +70,22 @@ ADR-0003~0006이 세운 아키텍처는 전부 "Windows가 우리 TIP을 텍스�
   (x64)/`LangBarPoc10-x86`/`LangBarPoc11`(TSF 연결)에 보존한다.
 - `src/ImeIndicatorTip`(기존 TIP DLL)는 당장 삭제하지 않는다 — 새 구현이 이를 완전히
   대체할 때까지 참고용으로 남긴다.
+
+## Update — 프로덕션 구현 및 실사용 검증 (2026-08-15)
+
+프로토타입을 `src/ImeFocusHook/`(`ImeFocusHookDll.vcxproj` x64+Win32, `ImeFocusHookLoader.vcxproj`
+x64+Win32)로 옮겨 실제 구현했다. `src/ImeIndicator`(UI/IPC 쪽)는 계획대로 한 줄도 안 바뀌었다 —
+기존 `ImeStateIpcListener`/`ForegroundWindowTracker`/`ForegroundStateResolver`가 이미 이 새
+아키텍처가 필요로 하는 모델(PID 키, 마지막 상태 유지)을 구현하고 있었기 때문이다.
+
+프로토타입 대비 프로덕션에서 추가/변경한 것: 프로세스 전역 구독 플래그를 `thread_local`로
+바꿔 같은 프로세스의 다른 UI 스레드도 독립적으로 구독되게 함, 파일 로깅을 실제 IPC 리포트로
+교체, 로더 EXE에 이름 붙은 뮤텍스(`ingee.ImeIndicator.FocusHookLoader.x64`/`.x86`) 기반 단일
+인스턴스 가드 추가(재실행 시 훅 중복 등록 방지 — 중복 실행 시 두 번째 인스턴스가 즉시 종료됨을
+실측 확인), DLL 경로를 절대경로 대신 자기 자신의 모듈 경로 기준 상대 참조로 변경.
+
+사용자가 메모장을 포함한 여러 앱과 **Excel**을 오가며 한/영 전환을 직접 검증 — 전부 정확히
+반영됨을 확인("완벽해"). 프로토타입 단계에서만 확인됐던 것이 실제 프로덕션 코드 경로로도
+재현됨을 확정. 이번 구현 범위 밖으로 남긴 항목(스레드 마샬링, `cmd.exe`/`conhost.exe` 재검증,
+크래시 자동 재시작, `docs/ui-spec.md` 갱신, `src/ImeIndicatorTip` 정리)은 여전히 미착수 —
+`.scratch/ime-detection-strategy/map.md`의 "Not yet specified" 참고.
