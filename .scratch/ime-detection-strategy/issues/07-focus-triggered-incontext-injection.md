@@ -53,3 +53,43 @@ Status: claimed
 
 실현 가능성 판정(가능/불가능/조건부) + 성립하면 TIP 회귀(issue 02) 원인 규명 자체를 우회할 수
 있는지 여부 + 남는 리스크(크래시 블라스트 반경, AV/EDR 오탐 등) 정리.
+
+## 조사 결과 — 1~3번 (2026-08-15)
+
+`prototype/langbar-observation-poc-throwaway` 브랜치에 `LangBarPoc10`(x64 시스템 전역
+`WINEVENT_INCONTEXT` 훅, `idProcess=0`으로 `EVENT_SYSTEM_FOREGROUND` 구독) +
+`LangBarHookDll.dll`에 `ForegroundHookProc` 추가(커밋 `d7c0c31`). 두 라운드 실측(1라운드:
+탐색기·Firefox·Notepad++·메모장·mintty, 2라운드: Excel·Word·PowerPoint 포함 재실행), 매
+콜백마다 `windowPid`/`windowTid`(=`GetWindowThreadProcessId`) vs `running-in-pid`(=콜백
+안에서 `GetCurrentProcessId()`)/`callback-tid`(=`GetCurrentThreadId()`) 비교.
+
+**1. 콜백이 실제로 포커스 얻은 프로세스 "안에서" 도는가 — 조건부 성립.**
+- 비Office 앱(탐색기 `explorer.exe`, Firefox, Notepad++, mintty, WinUI/COM 호스트 창 등,
+  두 라운드 합산 20건 이상): `running-in-pid == windowPid` 전부 일치. 예외 없음.
+- **Excel/Word/PowerPoint(전부 Office14 = Office 2010, `C:\Program Files (x86)\...` 설치 —
+  32비트) 3건 전부 실패.** `running-in-pid`가 매번 25088로 찍혔는데, 이는 실제 Office 창의
+  PID(9572/27496/3004 — 서로 다름)가 아니라 **훅을 설치한 `LangBarPoc10.exe` 자신의 PID**였다.
+  원인: 훅 설치 프로세스와 `LangBarHookDll.dll`을 x64로 빌드했는데 Office는 32비트라 인프로세스
+  주입이 애초에 불가능 — Windows가 `WINEVENT_INCONTEXT` 요청을 조용히 out-of-context 방식으로
+  강등시켜, 콜백이 대상 프로세스가 아니라 훅 설치 프로세스 안에서 대신 실행된 것으로 판단된다.
+  **이슈 등록 당시 "남는 위험" 5번(32/64비트 혼재)이 이론적 우려가 아니라 실측으로 확정된
+  장애물임을 확인** — 그것도 회귀 재현 대상이었던 바로 그 Excel에서.
+
+**2. 매 포커스 전환마다 신뢰성 있게 뜨는가 — 양호.** 두 라운드 모두, 실제로 전환한 서로 다른
+최상위 창마다 최소 1개 이상의 FOREGROUND 이벤트가 잡혔다. 드롭으로 의심되는 case 없음. (탐색기의
+`ForegroundStaging`/`XamlExplorerHostIslandWindow`, Office의 `MsoSplash` 등은 셸/앱 초기화
+과정의 과도기 창이 추가로 찍힌 것이라 실제 앱 전환과는 별개 — 중복이지 드롭이 아니다.) issue
+04의 `EVENT_OBJECT_NAMECHANGE`(10번 중 1번)와 대비되는 안정성.
+
+**3. 콜백 스레드가 그 창의 UI 스레드와 일치하는가 — 대체로 일치하나 예외 확인.** 인프로세스로
+확인된 건(비Office) 중 1건(메모장, pid 3732)에서 `callback-tid=24516`인데 `windowTid=22376`로
+**불일치**했다. 나머지는 전부 일치. 표본이 작아 재현 조건은 특정 못 함 — 4번 단계(TSF 연결) 설계
+시 `windowTid`와 `GetCurrentThreadId()`를 매번 비교해, 다르면 그 UI 스레드로 작업을 마샬링하는
+경로를 기본으로 넣어야 한다(항상 일치한다고 가정하면 안 됨).
+
+**중간 결론**: 주입 메커니즘 자체(질문 1, 2)는 **비Office 프로세스에서는** issue 04의 대안들보다
+훨씬 안정적임이 확인됐다. 그러나 이 PC의 실사용 범위에 32비트 Office가 포함돼 있어, **x64 전용
+빌드로는 이 프로젝트의 핵심 시나리오(Excel 포함)를 못 덮는다** — 32비트 훅 DLL을 별도로 빌드해
+대상 프로세스 비트니스에 맞춰 골라 로드하는 처리가 4번 진행의 전제조건으로 추가됨(조사할 것
+5번이 그대로 필요조건이 됨). 이 처리 없이 4번(Compartment 연결)을 먼저 하면 비Office 앱에서만
+되는 반쪽 결과가 나온다.
