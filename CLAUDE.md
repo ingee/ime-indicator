@@ -32,16 +32,33 @@ Windows에서 한글/영문 입력 상태(IME)를 항상 표시해 주는 상시
   **재검토 중, 확정 아님.** 자세한 배경과 진행 상황은
   [`ime-detection-strategy` issue 03](.scratch/ime-detection-strategy/issues/03-selection-required-nongoal-conflict.md).
 
-## 4. 현재 상태 — 아키텍처 재검토 중 (2026-08-14)
+## 4. 현재 상태 — 포커스-트리거 INCONTEXT 주입 채택 (2026-08-15)
 
-TIP 기반 접근(ADR-0001~0006)은 2026-08-07까지는 정상 동작을 확인한 유력한 후보였다. 그런데
-2026-08-08 이후 원인을 알 수 없는 회귀가 생겼다(TIP `Activate()`가 대부분 프로세스에서 호출
-안 됨). 조사 과정에서 ADR-0003/ADR-0005의 핵심 전제("선택 안 된 관찰자 TIP도 자동
-로드된다")마저 실측과 모순된다는 사실도 드러났다 — **이 두 ADR을 그대로 신뢰하지 말 것.**
+TIP 기반 접근(ADR-0001~0006)은 2026-08-07까지는 정상 동작을 확인한 유력한 후보였으나,
+2026-08-08 이후 원인을 알 수 없는 회귀로 대부분의 프로세스에서 TIP `Activate()`가 더 이상
+호출되지 않게 됐다(원인 미해결, `.scratch/ime-detection-strategy/issues/02`). 세 세션에 걸친
+원인 조사에도 근본 원인을 찾지 못해, **그 자동 로드 진입점 자체에 대한 의존을 포기**하고 대안을
+실측했다.
+
+**[ADR-0007](docs/adr/0007-focus-triggered-incontext-injection.md)에 따라, 포커스가 바뀔
+때마다 `SetWinEventHook(EVENT_SYSTEM_FOREGROUND, ..., WINEVENT_INCONTEXT)`로 그 순간 포커스를
+얻은 프로세스 안에 직접 코드를 주입하고, 그 안에서 우리가 직접 `CoCreateInstance(CLSID_TF_ThreadMgr)`
+→ `Activate()` → Compartment 구독까지 거는 방식을 새로운 핵심 감지 메커니즘으로 채택한다.**
+5단계 전부 실측 검증됨(`.scratch/ime-detection-strategy/issues/07-focus-triggered-incontext-injection.md`):
+인프로세스 주입 확정적 성공, 드롭 없는 신뢰성, TSF가 이 진입점을 정상 참가자로 받아들여 8/7
+이전과 동일하게 동작, x64+x86 훅 병행으로 32비트 Office(TIP이 한 번도 못 커버했던 범위)까지
+지원. ADR-0003의 "TIP 자동 로드" 전제와 issue 02의 회귀 원인은 더 이상 풀어야 할 문제가 아니다.
+
+프로토타입은 `prototype/langbar-observation-poc-throwaway` 브랜치의 `LangBarPoc10`/
+`LangBarPoc10-x86`/`LangBarPoc11`에 있고, 실제 프로덕션 구현(`src/`)은 아직 이 프로토타입을
+반영하지 않은 채로 남아 있다 — 다음 세션의 주요 작업. 남은 위험(스레드 마샬링, 크래시 블라스트
+반경, AV/EDR 오탐, 포커스별 재구독)은 ADR-0007 Consequences 절 참고.
 
 진행 상황과 다음 시도는 아래 Agent skills의 Issue tracker 절이 가리키는 wayfinder 맵을
-따른다. 구현 설계 자체는 `docs/adr/0002`~`0006`과 `src/ImeIndicatorTip/`, `src/ImeIndicator/`
-코드가 최신 출처다(코드가 실제로 하는 일과 이 문서가 어긋나면 코드를 신뢰할 것).
+따른다. 구현 설계 자체는 `docs/adr/0002`~`0007`과 `src/ImeIndicatorTip/`, `src/ImeIndicator/`
+코드가 최신 출처다(코드가 실제로 하는 일과 이 문서가 어긋나면 코드를 신뢰할 것 — 단, `src/`는
+아직 새 아키텍처를 반영하지 않았으므로 새 진입점 관련해서는 프로토타입 브랜치와 ADR-0007이
+우선한다).
 
 ## 5. 참고
 

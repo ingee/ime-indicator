@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0007
+---
+
 # TSF 포커스 신호 병행 채택 + Office TIP 활성화 저위험 실험
 
 ADR-0005의 PID 매칭 방식은 `cmd.exe`(보이는 창의 PID가 실제 TIP이 로드되는 프로세스인

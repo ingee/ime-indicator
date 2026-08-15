@@ -87,16 +87,29 @@ Label: wayfinder:map
   issue 02(TIP `Activate()` 회귀 원인)를 몰라도 되게 만들며, 이슈 04의 모든 대안보다 안정적이다.
   남는 위험은 스레드 마샬링 미구현, 크래시 블라스트 반경, AV/EDR 오탐 소지, 포커스별 재구독
   로직(ADR-0002 방식) 미검증 — 상세는 issue 07 결론 참고.
+- **2026-08-15, [ADR-0007](../../docs/adr/0007-focus-triggered-incontext-injection.md) 채택
+  (destination 도달) — 사용자 확정.** issue 07의 아키텍처를 새로운 핵심 감지 메커니즘으로
+  정식 채택. CLAUDE.md 4절을 이 결정에 맞춰 갱신, ADR-0005/0006에 `superseded by ADR-0007`
+  마킹(단 두 문서가 남긴 실측 사실은 계속 유효). [issue 02](issues/02-windows-settings-and-policy.md)
+  ("TIP `Activate()` 회귀 원인")는 더 이상 풀 이유가 없어져 "무관해짐"으로 resolved 처리.
+  **이 맵은 destination에 도달했다** — 이후 세션에서는 참고용으로만 남는다. 실제 프로덕션
+  구현(`src/`에 새 아키텍처 반영)은 아직 착수 전이며 별도 작업으로 넘어간다.
 
 ## Not yet specified
 
-- **다음 결정 지점**: issue 07이 유력 후보로 격상됐으니, 이걸 정식 채택해 CLAUDE.md 3~4절을
-  갱신할지, 아니면 issue 02(회귀 원인 규명)를 계속 병행할지 사용자와 상의 필요. 채택한다면 남은
-  위험(스레드 마샬링, ADR-0002 방식의 포커스별 재구독, AV/EDR 오탐 대응) 중 어디까지 실측하고
-  실제 구현으로 넘어갈지도 함께 정해야 한다.
-- 회귀 원인이 끝내 안 밝혀지면 issue 04(작업표시줄 관찰, 최후의 대안)로 완전히 갈아탈지, 절충
-  ([issue 03](issues/03-selection-required-nongoal-conflict.md))으로 갈지는 issue 07 채택 여부에
-  따라 우선순위가 달라진다.
+- **ADR-0007 채택으로 재검토가 필요해진 기존 이슈**(다음 세션에 우선 정리):
+  - [issue 03](issues/03-selection-required-nongoal-conflict.md)("선택된 프로필이어야만
+    관찰 가능한가")은 전제 자체가 무너졌을 가능성이 높다 — 새 아키텍처는 TIP으로 등록되거나
+    선택될 필요 없이, 임의의 주입된 코드가 직접 `CoCreateInstance(CLSID_TF_ThreadMgr)`을 불러
+    관찰에 성공했다(issue 07 4번). 재확인 후 moot 처리할지 판단 필요.
+  - [issue 06](issues/06-cmd-onsetfocus-and-excel-reverification.md)의 Excel 부분
+    (`TF_IPPMF_ENABLEPROFILE` 실험)은 불필요해졌다(ADR-0007 Consequences 참고). 다만
+    `cmd.exe`/`conhost.exe` PID 스왑 문제(ADR-0005 Update)는 **새 아키텍처에서 재현되는지
+    아직 실측 안 함** — `EVENT_SYSTEM_FOREGROUND`의 `hwnd` 소유 PID가 `cmd.exe`로 보고되는
+    상황에서 실제 주입이 `cmd.exe`/`conhost.exe` 중 어디로 되는지 확인 필요. issue 06을
+    이 항목만 남기고 재작성할지 새 이슈로 분리할지는 다음 세션에 결정.
+- 실제 구현 착수 시 순서: ADR-0007 Consequences의 남은 위험(스레드 마샬링, 포커스별 재구독,
+  x64+x86 프로세스 배포 구조) 중 어디부터 `src/`에 반영할지 다음 세션에 계획.
 
 ## Out of scope
 

@@ -1,5 +1,5 @@
 Type: research
-Status: open
+Status: resolved
 
 ## Question
 
@@ -30,3 +30,13 @@ IME/키보드 관련 항목이 8/7 이후 바뀐 게 있는가?
 ### 결론에 포함할 것
 
 관련 있음/없음 판정 + 근거.
+
+## Answer
+
+미착수 상태로 두고 [issue 07](07-focus-triggered-incontext-injection.md)을 먼저 실측한 결과,
+[ADR-0007](../../../docs/adr/0007-focus-triggered-incontext-injection.md)로 이어지는 대안
+아키텍처(포커스-트리거 `WINEVENT_INCONTEXT` 주입)가 이 회귀의 진입점(Windows의 자동 TIP
+`Activate()`) 자체에 의존하지 않고도 동일한 정확도로 동작함이 2026-08-15 확정됐다. 이 질문("왜
+그 진입점이 고장났는가")에 대한 답을 몰라도 프로젝트 목표를 달성할 수 있게 됐으므로, 더 이상
+조사할 이유가 없어 resolved 처리한다 — 원인 자체는 끝내 규명되지 않았다(포기가 아니라
+무관해짐).

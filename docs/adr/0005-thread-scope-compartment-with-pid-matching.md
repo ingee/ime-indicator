@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0007
+---
+
 # TIP의 스레드 스코프 컴파트먼트 + PID 매칭으로 IME 상태 감지
 
 ADR-0004는 `GUID_COMPARTMENT_KEYBOARD_OPENCLOSE`를 문서/전역(`GetGlobalCompartment`)/컨텍스트
