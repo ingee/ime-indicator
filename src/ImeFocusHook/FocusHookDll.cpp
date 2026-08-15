@@ -49,7 +49,7 @@
 // 메모장은 창 소유 스레드와 실제 입력 처리 스레드가 항상 분리돼 있어, 이 필터 때문에 매번
 // 구독 기회를 놓쳐 한/영 전환이 인디케이터에 반영되지 않았다(TSF 초기화 자체는 최초 1회
 // 우연히 스레드가 일치했을 때만 성공, 이후 재포커스마다 전부 스킵됨을 진단 로그로 실측).
-// 트램폴린 창 생성부터 DoTsfInit까지 전체 흐름이 windowTid가 아니라 "콜백이 실행 중인
+// 임시 부트스트랩 창 생성부터 DoTsfInit까지 전체 흐름이 windowTid가 아니라 "콜백이 실행 중인
 // 스레드(currentTid)"만으로 완결되므로(CreateWindowExW/PostMessageW 모두 호출 스레드
 // 기준), windowTid 일치를 요구할 근거가 애초에 없었다 — 그 대신 "이 프로세스가 포커스를
 // 받은 그 프로세스인지"(windowPid == GetCurrentProcessId())만 확인하도록 필터를 좁혔다.
@@ -177,7 +177,7 @@ private:
 // 스레드마다 독립적으로 구독한다 — 같은 프로세스라도 다른 스레드가 나중에 포커스를 얻으면
 // 그 스레드도 별도로 구독해야 한다(TSF가 원래 스레드마다 별도로 Activate()를 불러주던 것과
 // 동등하게 만들기 위함). true는 "구독 완료"뿐 아니라 "구독 시도가 이미 예약/진행 중"도
-// 의미한다 — DoTsfInit이 아직 트램폴린 창의 메시지를 기다리는 중일 때 같은 스레드에 또
+// 의미한다 — DoTsfInit이 아직 임시 부트스트랩 창의 메시지를 기다리는 중일 때 같은 스레드에 또
 // 포커스 이벤트가 와도 중복으로 창을 만들지 않기 위함.
 static thread_local bool t_subscribed = false;
 
@@ -188,7 +188,7 @@ static thread_local bool t_subscribed = false;
 // 정상 동작했다. 처음엔 "다음 포커스 전환에서 재시도"(t_subscribed를 풀어 실제 OS 포커스
 // 이벤트를 기다림)로 시도했으나, 같은 스레드가 계속 창을 갖고 있는 경우(실측: Windows 11
 // 메모장 tid=8756이 alt-tab 5회 내내 전부 실패) 사용자가 포커스를 옮기지 않으면 재시도
-// 자체가 안 걸린다는 한계가 드러났다. 그래서 포커스 전환을 기다리지 않고, 트램폴린 창의
+// 자체가 안 걸린다는 한계가 드러났다. 그래서 포커스 전환을 기다리지 않고, 임시 부트스트랩 창의
 // 메시지 루프 자체(WM_TIMER)로 같은 스레드에서 곧바로 재시도하도록 바꿨다 — 이 앱이 영원히
 // 준비 안 되는 경우(예: Excel처럼 TSF 자체를 안 쓰는 경우)를 대비해 무한 재시도로 인한
 // 리소스 누수를 막으려 횟수는 여전히 제한한다.
@@ -196,7 +196,7 @@ static thread_local int t_subscribeAttempts = 0;
 constexpr int kMaxSubscribeAttempts = 5;
 constexpr UINT kRetryDelayMs = 300;
 
-// 실제 TSF 작업 — WinEventProc 밖(트램폴린 창의 WndProc)에서만 호출된다. 반환값은 "이번
+// 실제 TSF 작업 — WinEventProc 밖(임시 부트스트랩 창의 WndProc)에서만 호출된다. 반환값은 "이번
 // 시도에서 진짜 값을 받았는가"(true) — false면 호출자가 재시도 여부를 판단한다.
 static bool DoTsfInit() {
     LogDiag("DoTsfInit: start");
@@ -279,29 +279,29 @@ static bool DoTsfInit() {
 }
 
 static HINSTANCE g_hInstance = nullptr;
-static const wchar_t* kTrampolineClassName = L"ingee.ImeFocusHook.TsfInitTrampoline";
+static const wchar_t* kBootstrapClassName = L"ingee.ImeFocusHook.TsfInitBootstrap";
 constexpr UINT WM_INIT_TSF = WM_APP + 1;
 constexpr UINT_PTR kRetryTimerId = 1;
 
-static LRESULT CALLBACK TrampolineWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+static LRESULT CALLBACK BootstrapWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_INIT_TSF || msg == WM_TIMER) {
         if (msg == WM_TIMER) {
             KillTimer(hwnd, kRetryTimerId);
-            LogDiag("TrampolineWndProc: WM_TIMER fired, retrying DoTsfInit");
+            LogDiag("BootstrapWndProc: WM_TIMER fired, retrying DoTsfInit");
         } else {
-            LogDiag("TrampolineWndProc: WM_INIT_TSF received, calling DoTsfInit");
+            LogDiag("BootstrapWndProc: WM_INIT_TSF received, calling DoTsfInit");
         }
         bool hasValue = DoTsfInit();
         if (!hasValue && ++t_subscribeAttempts < kMaxSubscribeAttempts) {
-            // 포커스 전환을 기다리지 않고 같은 스레드에서 곧바로 재시도한다 — 트램폴린 창은
+            // 포커스 전환을 기다리지 않고 같은 스레드에서 곧바로 재시도한다 — 임시 부트스트랩 창은
             // 살려두고 타이머로 다음 시도를 예약만 한다.
-            LogDiag("TrampolineWndProc: no value yet, retrying in %ums (attempt %d/%d)",
+            LogDiag("BootstrapWndProc: no value yet, retrying in %ums (attempt %d/%d)",
                     kRetryDelayMs, t_subscribeAttempts, kMaxSubscribeAttempts);
             SetTimer(hwnd, kRetryTimerId, kRetryDelayMs, nullptr);
             return 0;
         }
         if (!hasValue) {
-            LogDiag("TrampolineWndProc: no value after %d attempts, giving up retries",
+            LogDiag("BootstrapWndProc: no value after %d attempts, giving up retries",
                     t_subscribeAttempts);
         }
         DestroyWindow(hwnd);  // 부트스트랩 1회용 — 끝나면(성공하거나 재시도를 소진하면) 없앤다.
@@ -313,11 +313,11 @@ static LRESULT CALLBACK TrampolineWndProc(HWND hwnd, UINT msg, WPARAM wParam, LP
 // RegisterClassW는 프로세스 전체에 한 번만 필요하다. 같은 이름으로 두 번 불러도
 // ERROR_CLASS_ALREADY_EXISTS만 나고 부작용은 없으므로, 스레드 경합을 피하려 별도
 // 동기화 없이 매번 시도 후 결과를 함께 성공으로 취급한다.
-static bool EnsureTrampolineClassRegistered() {
+static bool EnsureBootstrapClassRegistered() {
     WNDCLASSW wc = {};
-    wc.lpfnWndProc = TrampolineWndProc;
+    wc.lpfnWndProc = BootstrapWndProc;
     wc.hInstance = g_hInstance;
-    wc.lpszClassName = kTrampolineClassName;
+    wc.lpszClassName = kBootstrapClassName;
     return RegisterClassW(&wc) != 0 || GetLastError() == ERROR_CLASS_ALREADY_EXISTS;
 }
 
@@ -346,29 +346,29 @@ extern "C" __declspec(dllexport) void CALLBACK FocusHookProc(HWINEVENTHOOK, DWOR
     // (.scratch/focus-hook-app-coverage/issues/02-new-notepad.md 실측: Windows 11 새 메모장은
     // 창 소유 스레드와 실제 입력을 처리하는 스레드가 분리돼 있어, 매번 다른 스레드에서 콜백이
     // 실행된다). 이전엔 windowTid != currentTid일 때 건너뛰었으나, 그러면 이런 앱에서는 영원히
-    // 구독 기회를 못 얻는다 — 이 콜백이 실행 중인 스레드 자체에서 트램폴린 창을 만들고 TSF를
+    // 구독 기회를 못 얻는다 — 이 콜백이 실행 중인 스레드 자체에서 임시 부트스트랩 창을 만들고 TSF를
     // 구독하는 흐름은 windowTid와 무관하게 currentTid만으로 완결되므로(CreateWindowExW/
     // PostMessageW/DoTsfInit 전부 호출 스레드 기준), windowTid 일치를 요구할 이유가 없었다.
 
-    // 이 시점부터 "구독 시도함"으로 표시 — DoTsfInit은 트램폴린 창이 WM_INIT_TSF를 받을 때
+    // 이 시점부터 "구독 시도함"으로 표시 — DoTsfInit은 임시 부트스트랩 창이 WM_INIT_TSF를 받을 때
     // (이 콜백을 벗어난 뒤) 실행되므로, 그 전에 같은 스레드에 또 포커스 이벤트가 와도 중복
     // 생성을 막는다.
     t_subscribed = true;
-    if (!EnsureTrampolineClassRegistered()) {
-        LogDiag("FocusHookProc: EnsureTrampolineClassRegistered failed, err=%lu", GetLastError());
+    if (!EnsureBootstrapClassRegistered()) {
+        LogDiag("FocusHookProc: EnsureBootstrapClassRegistered failed, err=%lu", GetLastError());
         t_subscribed = false;
         return;
     }
-    HWND trampoline = CreateWindowExW(0, kTrampolineClassName, nullptr, 0, 0, 0, 0, 0,
-                                       HWND_MESSAGE, nullptr, g_hInstance, nullptr);
-    if (!trampoline || !PostMessageW(trampoline, WM_INIT_TSF, 0, 0)) {
-        LogDiag("FocusHookProc: trampoline create/post failed, trampoline=%p err=%lu",
-                trampoline, GetLastError());
-        if (trampoline) DestroyWindow(trampoline);
+    HWND bootstrapWindow = CreateWindowExW(0, kBootstrapClassName, nullptr, 0, 0, 0, 0, 0,
+                                            HWND_MESSAGE, nullptr, g_hInstance, nullptr);
+    if (!bootstrapWindow || !PostMessageW(bootstrapWindow, WM_INIT_TSF, 0, 0)) {
+        LogDiag("FocusHookProc: bootstrapWindow create/post failed, bootstrapWindow=%p err=%lu",
+                bootstrapWindow, GetLastError());
+        if (bootstrapWindow) DestroyWindow(bootstrapWindow);
         t_subscribed = false;
         return;
     }
-    LogDiag("FocusHookProc: trampoline hwnd=%p created, WM_INIT_TSF posted", trampoline);
+    LogDiag("FocusHookProc: bootstrapWindow hwnd=%p created, WM_INIT_TSF posted", bootstrapWindow);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID) {
