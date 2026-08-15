@@ -74,17 +74,29 @@ Label: wayfinder:map
   판단: 폐기하지 않고 최후의 안전망으로 보류 — Windows가 어딘가엔 진짜 이벤트를 줄 거라는 신뢰를
   아직 안 거두고, issue 02(TIP 회귀 원인 추적)를 먼저 계속 판다. 이것마저 실패하면 그때 폴링을
   채택하되, 그 시점엔 CLAUDE.md 3절의 "폴링 금지" 원칙 자체를 재개정해야 함.
+- **2026-08-15, [issue 07](issues/07-focus-triggered-incontext-injection.md) resolved — 실현
+  가능성 확인, 유력 후보로 격상.** `prototype/langbar-observation-poc-throwaway` 브랜치에
+  `LangBarPoc10`/`LangBarPoc11`로 5단계 전부 실측: (1) 비트니스만 맞으면 `EVENT_SYSTEM_FOREGROUND`
+  + `WINEVENT_INCONTEXT`로 포커스 얻은 프로세스에 인프로세스 주입 100% 성공(비Office 20건+Office
+  3건), (2) 드롭 없이 신뢰성 양호, (3) 콜백 스레드가 UI 스레드와 대체로 일치하나 예외 1건(설계 시
+  마샬링 필요), (4) **핵심 검증**: 그 콜백 안에서 직접 `CoCreateInstance(CLSID_TF_ThreadMgr)` →
+  `Activate()` → Compartment `AdviseSink`까지 걸어도 TSF가 정상 참가자로 받아들여 8/7 이전과
+  동일하게 `OnChange`가 정확히 잡힘(Notepad++에서 한/영 20회 전환 전부 성공), (5) x64+x86 훅을
+  동시에 띄우면 32비트 Office(Excel/Word/PowerPoint)까지 커버됨 — **TIP 방식이 한 번도 못 했던
+  것**(TIP은 x64 전용으로만 빌드돼 왔음, 8/8 회귀와 무관한 원래부터의 공백). 결론: 이 아키텍처는
+  issue 02(TIP `Activate()` 회귀 원인)를 몰라도 되게 만들며, 이슈 04의 모든 대안보다 안정적이다.
+  남는 위험은 스레드 마샬링 미구현, 크래시 블라스트 반경, AV/EDR 오탐 소지, 포커스별 재구독
+  로직(ADR-0002 방식) 미검증 — 상세는 issue 07 결론 참고.
 
 ## Not yet specified
 
-- 회귀 원인이 끝내 안 밝혀지면 대안 아키텍처([issue 04](issues/04-taskbar-indicator-observation.md))로
-  완전히 갈아탈지, 절충([issue 03](issues/03-selection-required-nongoal-conflict.md))으로 갈지는
-  각 리서치 결과가 나온 뒤 사용자와 다시 상의한다.
-- **새 후보, 2026-08-15 등록**: [issue 07](issues/07-focus-triggered-incontext-injection.md) —
-  포커스 전환마다 `EVENT_SYSTEM_FOREGROUND` + `WINEVENT_INCONTEXT`로 그 프로세스에 직접
-  주입해서, TIP 자동 로드(현재 고장난 지점)를 우회하고 Compartment 구독을 바로 거는 아이디어.
-  issue 04에서 실측한 `WINEVENT_INCONTEXT` 주입 성공(`LangBarPoc8`)을 다른 이벤트에 응용하는
-  것이라 완전히 새 리서치는 아니고, 다음 세션에 이어서 진행하기로 함(오늘은 등록만).
+- **다음 결정 지점**: issue 07이 유력 후보로 격상됐으니, 이걸 정식 채택해 CLAUDE.md 3~4절을
+  갱신할지, 아니면 issue 02(회귀 원인 규명)를 계속 병행할지 사용자와 상의 필요. 채택한다면 남은
+  위험(스레드 마샬링, ADR-0002 방식의 포커스별 재구독, AV/EDR 오탐 대응) 중 어디까지 실측하고
+  실제 구현으로 넘어갈지도 함께 정해야 한다.
+- 회귀 원인이 끝내 안 밝혀지면 issue 04(작업표시줄 관찰, 최후의 대안)로 완전히 갈아탈지, 절충
+  ([issue 03](issues/03-selection-required-nongoal-conflict.md))으로 갈지는 issue 07 채택 여부에
+  따라 우선순위가 달라진다.
 
 ## Out of scope
 

@@ -1,5 +1,5 @@
 Type: research
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -122,3 +122,52 @@ PC는 x64/x86만 확인되면 충분). 구현 시 두 프로세스(또는 두 �
 회귀로 새로 생긴 문제가 아니라 TIP 접근 자체에 처음부터 있었던, 그동안 발견되지 않았던 공백이다.
 즉 이슈 07의 x86 훅은 "회귀를 우회"하는 것을 넘어 **TIP 방식이 한 번도 못 했던 32비트 Office
 커버리지를 이번에 처음 달성**한 것 — 대안으로서의 값어치가 처음 평가했을 때보다 크다.
+
+## 조사 결과 — 4번, TSF Compartment 연결 (2026-08-15)
+
+`LangBarHookDll11.dll`(`CompartmentHookProc`) + `LangBarPoc11.exe`(커밋 `003ab8f`) — 스레드가
+일치하는 경우(3번 조건) `EVENT_SYSTEM_FOREGROUND` 콜백 안에서 직접
+`CoCreateInstance(CLSID_TF_ThreadMgr)` → `Activate()` → `ITfCompartmentMgr` QI →
+`GetCompartment(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE)` → `AdviseSink`까지 수행하도록
+`src/ImeIndicatorTip/ImeStateTip.cpp`의 "스레드 매니저 자신을 QI" 로직을 그대로 이식.
+
+**결과: 전부 성공.** Notepad++(pid 27224)로 전환한 뒤 그 안에 머무르며 한/영을 20회 전환 —
+`OnChange`가 **누락 없이, 매번 정확한 값으로**(0/1 번갈아) 전부 잡혔다. `ThreadMgr::Activate`,
+`GetCompartment`, `AdviseSink` 전부 첫 시도에 성공(등록된 TIP이 전혀 아닌데도). 탐색기/conhost/
+mintty에서도 `Activate`~`AdviseSink`까지는 성공(그 창들에서는 한/영을 안 건드려 `OnChange`
+케이스는 없었지만 구독 자체는 됨).
+
+**의미**: "TSF가 우리를 `Activate()`해주는 걸 기다리지 않고, 포커스 전환 시점에 우리가 직접
+`ThreadMgr`를 만들어 구독을 걸어도, TSF는 이를 정상적인 참가자로 받아들이고 8/7 이전과 동일하게
+동작한다"가 실측으로 확정됐다. issue 02가 풀지 못한 "왜 Windows가 우리 TIP을 자동으로
+`Activate()`해주지 않는가"라는 미스터리를 **몰라도 되게** 만드는, 이슈 등록 당시의 가설이 그대로
+들어맞았다.
+
+## 결론
+
+**실현 가능성: 가능.** 조사할 것 1~5번 전부, 별도 전제조건 없이 그대로 성립했다.
+
+- **TIP 회귀(issue 02) 원인 규명을 완전히 우회한다.** 이 아키텍처는 Windows의 자동 TIP
+  `Activate()` 진입점을 아예 쓰지 않으므로, 그게 왜 고장났는지 몰라도 동작한다.
+- **TIP 방식이 한 번도 못 했던 것(32비트 Office 커버리지)을 추가로 달성한다** — x64+x86 훅을
+  동시에 띄우면 됨(질문 5, 실측 검증 완료).
+- 신뢰성(질문 2)은 issue 04에서 검토한 모든 대안(`ITfLangBarItemMgr` 크로스프로세스 조회 불가,
+  UI Automation 상태 미노출, `NAMECHANGE` 10번 중 1번)보다 뚜렷하게 낫다.
+- **남는 위험**:
+  1. 스레드 불일치 예외(질문 3, 메모장에서 1건 관측) — 프로덕션 구현 시 `windowTid`와
+     `GetCurrentThreadId()`를 비교해 다르면 그 UI 스레드로 마샬링하는 경로가 필요하다(이번
+     프로토타입은 불일치 시 그냥 건너뜀 — 실제 구현엔 못 넣고 지나칠 항목).
+  2. 크래시 블라스트 반경 — 포커스 전환마다 임의의 앱 프로세스에 우리 DLL이 실제로 로드되므로,
+     버그가 나면 그 순간 쓰고 있던 앱이 죽을 수 있다.
+  3. AV/EDR 오탐 — "포커스가 바뀔 때마다 다른 프로세스에 몰래 들어가는" 패턴은 키로거류와
+     휴리스틱이 겹친다(issue 01에서 조사한 Citrix App Protection이 정확히 이런 패턴을 잡는
+     도구).
+  4. 이번 프로토타입은 프로세스당 최초 1회만 구독하고 이후 재진입은 스킵(`g_subscribed`) —
+     실제 구현은 창/컨텍스트 전환마다 ADR-0002 방식(`OnSetFocus`로 구독 교체)을 이 진입점 위에
+     다시 얹어야 한다. 아직 실측 안 함.
+  5. `threadMgr`을 의도적으로 leak시켰다(Release 시 구독이 같이 죽을 가능성 회피) — 실제 구현은
+     프로세스 종료/재주입 시점의 정리 전략이 필요하다.
+
+**다음 결정 지점**: `.scratch/ime-detection-strategy/map.md`의 destination(CLAUDE.md 3~4절
+갱신)에 반영할 선택지 — 이 아키텍처를 정식 채택할지, issue 02(회귀 원인 규명)를 계속 병행할지는
+사용자와 상의 필요.
