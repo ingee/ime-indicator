@@ -39,9 +39,11 @@ static class Program
         // TIP DLL이 아직 등록되지 않았거나 파이프 서버를 못 띄워도(방어적 처리) 인디케이터는
         // 기본값(영문)으로 계속 떠 있는다. 상태 갱신은 오직 IPC 메시지 + 포커스 전환 이벤트로만
         // 트리거된다 — 폴링 없음.
+        ImeStateIpcListener? ipcListener = null;
         try
         {
-            new ImeStateIpcListener(stateStore, foregroundTracker, uiContext).Start();
+            ipcListener = new ImeStateIpcListener(stateStore, foregroundTracker, uiContext);
+            ipcListener.Start();
         }
         catch (IOException)
         {
@@ -95,6 +97,9 @@ static class Program
                 {
                 }
             }
+
+            ipcListener?.Dispose();
+            foregroundTracker.Dispose();
         };
 
         // 창 생성 도중의 DPI 협상 과정(WM_DPICHANGED 연쇄)이 불안정한 것으로 확인되어,
