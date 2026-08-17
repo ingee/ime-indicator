@@ -1,5 +1,5 @@
 Type: research
-Status: open
+Status: closed (superseded by ADR-0007, 2026-08-17)
 
 ## Question
 
@@ -38,3 +38,11 @@ Status: open
 ### 결론에 포함할 것
 
 충돌 여부 판정 + 절충 가능성(있다면 구체적 방법, 없다면 그 근거) + 권고.
+
+## Closed as superseded (2026-08-17)
+
+핵심 감지 메커니즘이 TIP `Activate()`/프로필 선택 방식에서 [ADR-0007](../../../docs/adr/0007-focus-triggered-incontext-injection.md)의
+포커스-트리거 INCONTEXT 인젝션으로 완전히 교체됐다 — 이제는 프로필을 "선택"시킬 필요 자체가
+없으므로("선택돼야 관찰 가능"이라는 이 이슈의 전제가 되는 메커니즘이 더 이상 쓰이지 않음),
+여기서 다루던 비목표 충돌 질문은 무의미해졌다. 실측 답을 얻지 못한 채 닫는다 — 미해결
+회귀(issue 01/02)가 원인이 아니라 아키텍처 자체를 갈아엎어서 우회된 케이스.

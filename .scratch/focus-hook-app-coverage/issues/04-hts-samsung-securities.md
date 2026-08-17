@@ -1,5 +1,5 @@
 Type: task
-Status: open
+Status: resolved (대응 불가 판정)
 
 ## Question
 
@@ -32,3 +32,29 @@ Status: open
 
 원인 판정(인젝션 차단 / 다른 원인) + 대응 가능 여부 + 대응 불가 시 "알려진 한계"로 문서화할지
 여부.
+
+## Resolution (2026-08-17)
+
+**원인**: 인젝션 자체가 차단됨. HTS 실행 중(`pdMain.exe`, `C:\삼성증권\POPHTSN\pdMain.exe`)
+`tasklist /m ImeFocusHookDll.dll`에 해당 프로세스가 나타나지 않았다. 관리자 권한 PowerShell로
+`Get-Process -Id <pdMain PID>`를 직접 조회해도 `.Modules`가 0개, `.Path`가 빈 문자열로
+반환됐다 — 예외 없이 조용히 실패하는 전형적인 `PROCESS_VM_READ` 차단 증상이다(같은 PID를
+`Get-CimInstance Win32_Process`로 조회하면 `ExecutablePath`는 정상 반환됨 — WMI 경로는 이
+권한을 요구하지 않으므로 프로세스 자체는 살아있고 조회 가능하나, 메모리 접근 계열 API만
+막혀 있음이 대조 확인됨).
+
+이 PC에서 실행 중인 서비스 확인 결과 `KOS_Service`(Kings Online Security)와
+`SafeTransactionSVC`(AhnLab Safe Transaction)가 Running 상태로 떠 있었다 — 둘 다 국내
+증권/은행 HTS에 흔히 동반되는 안티 키로거/메모리 보호 모듈이다. 우리 훅의 인젝션 경로
+(`WriteProcessMemory`/`CreateRemoteThread` 계열, `WINEVENT_INCONTEXT`)가 요구하는 것과
+정확히 같은 종류의 프로세스 메모리 접근 권한을 이 모듈들이 차단하고 있는 것으로 판단된다.
+`.scratch/ime-detection-strategy/issues/01-security-software-investigation.md`에서 이미
+확인했던 "보안 소프트웨어의 인젝션 차단" 패턴과 같은 계열이며, map.md의 사전 가설이 그대로
+들어맞았다.
+
+**대응 가능 여부**: 대응 불가로 판정, 우회 시도하지 않음(사용자 결정, 2026-08-17). 계좌
+보안이 걸린 금융 앱의 안티 키로거 보호를 우회하는 것은 이 프로젝트의 목적(입력 상태 표시)에
+비해 부적절하다고 판단했다.
+
+**결론**: HTS는 "알려진 한계"로 문서화한다 — 이 앱에서는 인디케이터가 반응하지 않으며,
+향후에도 고칠 계획이 없다.

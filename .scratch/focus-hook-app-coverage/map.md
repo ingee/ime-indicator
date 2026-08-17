@@ -48,6 +48,13 @@ ADR-0007(포커스-트리거 INCONTEXT 인젝션) 프로덕션 구현(`src/ImeFo
   **issue 04(삼성증권 HTS)를 먼저** 진행한다 — 실사용 빈도가 가장 높다는 이유가 이번엔
   "오늘 안에 진전 가능성"보다 우선한다. issue 03(mintty)은 이전 세션(2026-08-15)에 이미
   `resolved`로 닫혀 있어 별도 조사 불필요.
+- **2026-08-17, issue 04(HTS) 대응 불가로 확정(사용자 결정)**: `pdMain.exe`가
+  `KOS_Service`(Kings Online Security)/`SafeTransactionSVC`(AhnLab Safe Transaction) 안티
+  키로거 모듈에 의해 메모리 접근(`PROCESS_VM_READ`)이 차단된 것을 실측 확인 — map.md의
+  사전 가설이 그대로 들어맞았다. 금융 앱의 보안 모듈을 우회하는 시도는 하지 않기로 결정,
+  "알려진 한계"로 문서화만 하고 종료(상세: issue 04 Resolution 절). **이로써 이 맵의 4개
+  이슈가 모두 처리됨**(01 resolved, 02 paused/deprioritized, 03 resolved, 04 resolved-대응불가)
+  — "Out of scope" 게이트(신규 기능 착수 보류)가 해제됐다.
 
 ## Not yet specified
 
@@ -57,5 +64,6 @@ ADR-0007(포커스-트리거 INCONTEXT 인젝션) 프로덕션 구현(`src/ImeFo
 
 ## Out of scope
 
-이 맵의 4개 이슈가 전부 resolved되기 전까지 신규 기능(설정 파일화) 착수는 이 맵의 범위 밖
-(사용자 지시, 2026-08-15).
+~~이 맵의 4개 이슈가 전부 resolved되기 전까지 신규 기능(설정 파일화) 착수는 이 맵의 범위 밖~~
+(사용자 지시, 2026-08-15) — **2026-08-17, 4개 이슈 모두 처리 완료로 게이트 해제.** 신규 기능
+(인디케이터 크기/위치 JSON 설정화) 착수 가능, "Not yet specified" 절 참고.
