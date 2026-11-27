@@ -1,5 +1,5 @@
 Type: task
-Status: open
+Status: closed (superseded by ADR-0007, 2026-08-17)
 
 ## Question
 
@@ -31,3 +31,10 @@ Status: open
 
 되는지/안 되는지 + (되면) CLSID에 실제로 어떤 흔적이 남았던 건지 추적, (안 되면) CLSID 이력
 가설 완전 폐기.
+
+## Closed as superseded (2026-08-17)
+
+이 실험은 TIP `Activate()` 자동 로드 회귀(issue 01/02)의 잔여 후보였다.
+[ADR-0007](../../../docs/adr/0007-focus-triggered-incontext-injection.md) 채택으로 TIP
+자동 로드 진입점 자체에 대한 의존을 포기했으므로("ADR-0003의 'TIP 자동 로드' 전제와 issue 02의
+회귀 원인은 더 이상 풀어야 할 문제가 아니다" — CLAUDE.md 4절), 실행 없이 폐기한다.

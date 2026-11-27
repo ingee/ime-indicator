@@ -1,5 +1,5 @@
 Type: task
-Status: open
+Status: closed (superseded by ADR-0007, 2026-08-17)
 Blocked by: 01, 02
 
 ## Question
@@ -37,3 +37,14 @@ Blocked by: 01, 02
 ### 결론에 포함할 것
 
 각 항목의 성공/실패 + Excel 실험 결과에 따라 ADR-0006 자체를 갱신할지 여부.
+
+## Closed as superseded (2026-08-17)
+
+`ITfThreadMgrEventSink`/`OnSetFocus` 구독과 `TF_IPPMF_ENABLEPROFILE` 실험은 모두 TIP
+`Activate()` 기반 설계(ADR-0006)의 후속 항목이었다. [ADR-0007](../../../docs/adr/0007-focus-triggered-incontext-injection.md)이
+그 설계 전체를 대체했고, 여기서 다루려던 목표(cmd.exe/Excel 반영)는 이후 다른 방식으로 이미
+달성됐다: cmd.exe/conhost.exe는
+`.scratch/focus-hook-app-coverage/issues/01-cmd-conhost.md`에서 PID 해석 폴백으로 해결,
+Excel은 ADR-0007 프로덕션 구현 검증 시 사용자가 직접 정상 동작을 확인했다(ADR-0007 Update
+절). 블로커였던 회귀(issue 01/02)를 푸는 대신 아키텍처를 교체해 우회된 케이스이므로, 이
+이슈 자체는 실행 없이 닫는다.

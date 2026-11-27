@@ -58,6 +58,23 @@ TIP 기반 접근(ADR-0001~0006)은 2026-08-07까지는 정상 동작을 확인�
 `cmd.exe`/`conhost.exe` 재검증)은 ADR-0007 Consequences 절과 map.md "Not yet specified"
 참고 — 전부 다음 작업으로 남아 있다.
 
+**개발 중 자기 자신의 터미널을 잠그지 않으려면**: 이 훅은 시스템 전역이라, `ImeIndicator.exe`를
+띄운 채로 재현 테스트를 하다가 결과를 공유하려고 개발용 터미널(mintty 등, Claude Code 세션을
+호스팅하는 프로세스 포함)로 포커스를 돌리면 그 터미널 자신이 주입 대상이 되어
+`ImeFocusHookDll.dll`이 pin된다 — 다음 재빌드 때 그 터미널을 재시작하기 전까지 `release/`
+폴더로 복사가 막힌다. **트레이 "종료" 메뉴를 누르면 로더 프로세스가 죽으면서 훅도 즉시
+해제되므로, 개발용 터미널로 돌아오기 전에 먼저 "종료"부터 누른다**(순서: `ImeIndicator.exe`
+실행 → 테스트 대상 앱에서 재현 → 트레이 "종료" → 그다음 터미널로 복귀해 결과 공유; mintty에서
+실행했어도 상관 없다). 상세 배경은 ADR-0007 Update(2026-08-16) 참고.
+
+**빌드는 `build`, 배포는 `release`로 분리한다**: `scripts/build.ps1`은 컴파일만 하고
+`release/`는 건드리지 않는다 — 세션 중 반복 테스트는 `src/ImeIndicator/bin/Release/
+net8.0-windows/ImeIndicator.exe`(빌드 산출물이 이미 자체 실행 가능한 상태로 여기 있다)를
+직접 실행한다. `release/`는 세션을 마무리하며 그 시점의 빌드가 지금 `release/`에 있는
+버전보다 완성도가 높다고 판단될 때만 `scripts/release.ps1`(내부적으로 `build.ps1`을 다시
+호출한 뒤 `release/`를 새로 만듦)로 승격한다 — 세션 도중의 실험적 빌드가 실제 배포판에
+섞이는 것을 막기 위함이다.
+
 진행 상황과 다음 시도는 아래 Agent skills의 Issue tracker 절이 가리키는 wayfinder 맵을
 따른다. 구현 설계 자체는 `docs/adr/0002`~`0007`과 `src/ImeFocusHook/`, `src/ImeIndicator/`
 코드가 최신 출처다(코드가 실제로 하는 일과 이 문서가 어긋나면 코드를 신뢰할 것).
@@ -73,8 +90,11 @@ TIP 기반 접근(ADR-0001~0006)은 2026-08-07까지는 정상 동작을 확인�
 
 ### Issue tracker
 
-`.scratch/`의 로컬 마크다운 — `docs/agents/issue-tracker.md` 참고. 현재 진행 중인 아키텍처
-재검토는 [`ime-detection-strategy` map](.scratch/ime-detection-strategy/map.md).
+`.scratch/`의 로컬 마크다운 — `docs/agents/issue-tracker.md` 참고. 현재 진행 중인 조사는
+[`focus-hook-app-coverage` map](.scratch/focus-hook-app-coverage/map.md)(ADR-0007 구현 이후
+반응하지 않는 것으로 발견된 4개 앱 대응). 이전 아키텍처 재검토
+[`ime-detection-strategy` map](.scratch/ime-detection-strategy/map.md)은 destination에
+도달해 참고용으로만 남아 있다.
 
 ### Domain docs
 

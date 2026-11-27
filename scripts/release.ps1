@@ -1,39 +1,21 @@
-<#
+﻿<#
 .SYNOPSIS
-    ime-indicator를 Release 구성으로 빌드하고 release/ 디렉토리를 새로 만든다.
+    ime-indicator를 다시 빌드하고 release/ 디렉토리를 새로 만든다 — 세션을 마무리하며 지금까지의
+    변경을 "안정 버전"으로 승격할 때만 실행한다.
 .DESCRIPTION
-    매번 release/를 통째로 지우고 새로 만든다 — 과거에 다른 방식(예: dotnet publish
+    scripts/build.ps1로 먼저 다시 빌드해 release/가 항상 최신 소스를 반영하게 한 뒤, 매번
+    release/를 통째로 지우고 새로 만든다 — 과거에 다른 방식(예: dotnet publish
     --self-contained)으로 만들어진 산출물이 섞여 남는 것을 원천 차단하기 위함이다.
-    실행 중인 ImeIndicator.exe/ImeFocusHookLoader.exe가 있으면 먼저 종료한다 — 안 그러면
-    FocusHook DLL이 파일 잠금으로 복사에 실패할 수 있다.
+
+    세션 중 반복 빌드/테스트는 scripts/build.ps1과 bin 폴더에서 하고, 이 스크립트는 그 빌드가
+    release/의 현재 버전보다 완성도가 높다고 판단될 때(대개 wrap-up 시점) 한 번만 실행한다.
 #>
 
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
-Get-Process -Name ImeIndicator, ImeFocusHookLoader -ErrorAction SilentlyContinue | Stop-Process -Force
-
-$msbuild = Get-ChildItem "C:\Program Files\Microsoft Visual Studio", "C:\Program Files (x86)\Microsoft Visual Studio" `
-    -Recurse -Filter MSBuild.exe -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-if (-not $msbuild) {
-    throw "MSBuild.exe를 찾지 못했습니다. Visual Studio Build Tools(C++ 워크로드, MSVC v145 툴셋)가 설치돼 있는지 확인하세요."
-}
-
-# 네이티브 hook(x64 + Win32, Dll + Loader) Release 빌드 — UI 빌드보다 먼저 해야
-# ImeIndicator.csproj의 내장 빌드 타겟이 그 결과물을 FocusHook/ 아래로 복사해간다.
-foreach ($platform in "x64", "Win32") {
-    foreach ($project in "ImeFocusHookDll", "ImeFocusHookLoader") {
-        & $msbuild "$repoRoot\src\ImeFocusHook\$project.vcxproj" /p:Configuration=Release /p:Platform=$platform /nologo /v:minimal
-        if ($LASTEXITCODE -ne 0) {
-            throw "$project ($platform) 빌드 실패"
-        }
-    }
-}
-
-dotnet build "$repoRoot\src\ImeIndicator\ImeIndicator.csproj" -c Release --nologo -v:minimal
-if ($LASTEXITCODE -ne 0) {
-    throw "ImeIndicator.csproj 빌드 실패"
-}
+& "$PSScriptRoot\build.ps1"
 
 # release/를 통째로 지우고 새로 만든다 — 과거에 다른 방식으로 만들어진 산출물이 섞여
 # 남는 것을 막기 위함이다. 단, ImeFocusHookDll.dll은 GET_MODULE_HANDLE_EX_FLAG_PIN으로
@@ -44,7 +26,7 @@ $releaseDir = Join-Path $repoRoot "release"
 if (Test-Path $releaseDir) {
     Get-ChildItem $releaseDir -Recurse -Force | Sort-Object FullName -Descending | ForEach-Object {
         try {
-            Remove-Item $_.FullName -Force -ErrorAction Stop
+            Remove-Item $_.FullName -Force -Confirm:$false -ErrorAction Stop
         } catch {
             Write-Warning "삭제 못함(다른 프로세스가 사용 중일 수 있음 — pin된 FocusHook DLL이면 정상): $($_.FullName)"
         }

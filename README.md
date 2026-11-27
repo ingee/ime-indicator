@@ -21,13 +21,19 @@ Windows용 한/영 입력 상태(IME) 인디케이터.
 release\ImeIndicator.exe
 ```
 
+> **개발 중 반복 테스트는 `release/`가 아니라 빌드 폴더에서 한다**:
+> `src\ImeIndicator\bin\Release\net8.0-windows\ImeIndicator.exe`. `release/`는 세션을
+> 마무리하며 그 시점의 빌드를 "안정 버전"으로 승격할 때만 갱신한다(아래 "빌드" 절 참고) —
+> 그래야 세션 도중의 실험적 빌드가 실제 배포판에 섞여 들어가지 않는다.
+
 실행하면 UI 프로세스(`ImeIndicator.exe`)가 hook 로더 두 개(`FocusHook\x64\
 ImeFocusHookLoader.exe`, `FocusHook\x86\ImeFocusHookLoader.exe`)를 함께 띄운다 — 작업
 관리자에 이 셋이 모두 보이면 정상이다.
 
-> **알려진 제약(미검증)**: 로더를 관리자 권한 없이 실행하면, 관리자 권한으로 뜬 다른
-> 프로세스(예: 관리자 권한 cmd, 일부 개발 도구)에는 Windows UIPI 때문에 hook이 안 들어가서
-> 그 앱의 상태가 인디케이터에 반영되지 않을 수 있다.
+> **알려진 제약(확인됨, 2026-08-16)**: 로더를 관리자 권한 없이 실행하면, 관리자 권한으로 뜬
+> 다른 프로세스(예: 관리자 권한 mintty/git bash, 관리자 권한 cmd, 일부 개발 도구)에는 Windows
+> UIPI 때문에 hook이 안 들어가서 그 앱의 상태가 인디케이터에 반영되지 않는다. 로더를 관리자
+> 권한으로 실행하면 해결된다.
 
 
 ## 사용법 (현재까지 구현된 범위)
@@ -43,8 +49,9 @@ ImeFocusHookLoader.exe`, `FocusHook\x86\ImeFocusHookLoader.exe`)를 함께 띄�
 
 필요한 도구: .NET 8 SDK, Visual Studio Build Tools(C++ 워크로드, MSVC v145 툴셋).
 
-> `scripts/build-release.ps1`이 준비돼 있다. 필요한 산출물을 빌드해서 `release/`로
-> 복사한다.
+> `scripts/build.ps1`이 준비돼 있다 — 아래 산출물을 빌드하기만 하고 `release/`는 건드리지
+> 않는다(세션 중 반복 실행용, 위 "실행" 절 참고). `release/`를 갱신하려면
+> `scripts/release.ps1`을 실행한다 — `build.ps1`로 다시 빌드한 뒤 `release/`를 새로 만든다.
 
 1. 네이티브 hook(`src/ImeFocusHook/`)을 64비트(x64)와 32비트(Win32) 두 가지로 빌드한다
    (Developer PowerShell 등 MSVC 환경이 잡힌 셸에서):
@@ -67,11 +74,12 @@ ImeFocusHookLoader.exe`, `FocusHook\x86\ImeFocusHookLoader.exe`)를 함께 띄�
 
 ## release 디렉토리 만들기
 
-저장소 루트의 `release/`는 실행에 필요한 산출물을 모아두는 곳이다. 소스 관리 대상이
-아니며(`.gitignore`), 위 빌드 후 매번 새로 만든다:
+저장소 루트의 `release/`는 실행에 필요한 "안정 버전" 산출물만 모아두는 곳이다. 소스 관리
+대상이 아니며(`.gitignore`), 세션을 마무리하며 그 시점의 빌드를 승격할 때만 갱신한다(세션
+중 실험적 빌드로 덮어쓰지 않는다):
 
 ```powershell
-Copy-Item -Recurse -Force src/ImeIndicator/bin/Release/net8.0-windows/* release/
+scripts/release.ps1
 ```
 
 
